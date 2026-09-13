@@ -27,10 +27,13 @@
       box-sizing: border-box;
     }
 
+    html, body {
+      background: transparent; /* ページ全体の背景を透過 */
+    }
+
     body {
       font-family: 'Roboto', sans-serif;
       text-align: center;
-      overflow: hidden; /* スクロールバーを出さない */
     }
 
     .nowtime {
@@ -110,7 +113,7 @@
     .color-picker-popover {
       display: none;
       position: absolute;
-      top: 100%; /* 時計のすぐ下に配置して見切れを防ぐ */
+      top: 100%;
       left: 50%;
       transform: translateX(-50%);
       margin-top: 10px;
@@ -236,7 +239,7 @@
 
     footer {
       position: absolute;
-      bottom: 0; /* 下に固定して余計なスクロールを防ぐ */
+      bottom: 0;
       width: 100%;
     }
   </style>
@@ -412,7 +415,7 @@
         const start = chip.getAttribute("data-start");
         const end = chip.getAttribute("data-end");
         setGradient(start, end);
-        popover.classList.remove("active"); 
+        popover.classList.remove("active");
       });
     });
 
