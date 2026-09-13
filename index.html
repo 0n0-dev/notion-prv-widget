@@ -19,6 +19,15 @@
       --grad-start: #00c6ff;
       --grad-end: #0072ff;
       --bg-color: #ffffffb3;
+      --notion-bg: #ffffff; /* Notion標準背景（ライト） */
+    }
+
+    /* Notionがダークモードの場合に自動で背景色を合わせる */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --notion-bg: #191919; /* Notion標準背景（ダーク） */
+        --bg-color: #ffffff1a;
+      }
     }
 
     * {
@@ -30,6 +39,7 @@
     body {
       font-family: 'Roboto', sans-serif;
       text-align: center;
+      background-color: var(--notion-bg); /* Notion背景色と同化 */
     }
 
     .nowtime {
@@ -109,9 +119,10 @@
     .color-picker-popover {
       display: none;
       position: absolute;
-      top: 60%;
+      top: 100%;
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
+      margin-top: 10px;
       background: #ffffff;
       border: 1px solid #ccc;
       border-radius: 10px;
@@ -234,7 +245,7 @@
 
     footer {
       position: absolute;
-      margin-top: 500px;
+      bottom: 0;
       width: 100%;
     }
   </style>
@@ -405,13 +416,12 @@
       e.stopPropagation();
     });
 
-    // プリセットクリック時にUIを閉じる処理を追加
     document.querySelectorAll(".preset-chip").forEach(chip => {
       chip.addEventListener("click", () => {
         const start = chip.getAttribute("data-start");
         const end = chip.getAttribute("data-end");
         setGradient(start, end);
-        popover.classList.remove("active"); // ポップアップを閉じる
+        popover.classList.remove("active"); 
       });
     });
 
