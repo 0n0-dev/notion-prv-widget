@@ -18,7 +18,7 @@
     :root {
       --grad-start: #00c6ff;
       --grad-end: #0072ff;
-      --bg-color: transparent; /* 背景を完全透明に指定 */
+      --bg-color: #191919; /* Notionのダークモード背景色 */
     }
 
     * {
@@ -30,7 +30,8 @@
     body {
       font-family: 'Roboto', sans-serif;
       text-align: center;
-      background-color: transparent; /* bodyの背景も透明化 */
+      background-color: var(--bg-color); /* 背景色をNotion黒に指定 */
+      color: #ffffff;
     }
 
     .nowtime {
@@ -97,27 +98,27 @@
       border: none;
       cursor: pointer;
       font-size: 12px;
-      opacity: 0.2;
+      opacity: 0.3;
       transition: opacity 0.2s ease;
       padding: 2px;
     }
 
     .nowtime:hover .color-btn {
-      opacity: 0.8;
+      opacity: 0.9;
     }
 
-    /* 設定ポップアップ */
+    /* 設定ポップアップ（ダークテーマ対応） */
     .color-picker-popover {
       display: none;
       position: absolute;
       top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: #ffffff;
-      border: 1px solid #ccc;
+      background: #252525; /* Notionに馴染むダークポップアップ背景 */
+      border: 1px solid #373737;
       border-radius: 10px;
       padding: 8px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
       z-index: 100;
       width: 170px;
       height: 105px;
@@ -152,14 +153,14 @@
       width: 100%;
       height: 26px;
       border-radius: 4px;
-      border: 1px solid rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     .preset-chip:hover {
       transform: scale(1.1);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
 
     /* カスタム色設定 */
@@ -182,7 +183,7 @@
 
     .custom-row label {
       font-size: 10px;
-      color: #333;
+      color: #cccccc;
       font-weight: bold;
     }
 
@@ -199,7 +200,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #333333;
       padding-top: 3px;
     }
 
@@ -208,17 +209,17 @@
       border: none;
       cursor: pointer;
       font-size: 10px;
-      color: #666;
+      color: #aaa;
       padding: 0 4px;
     }
 
     .nav-arrow:hover {
-      color: #000;
+      color: #fff;
     }
 
     .nav-indicator {
       font-size: 10px;
-      color: #666;
+      color: #aaa;
       font-weight: bold;
     }
 
@@ -406,7 +407,6 @@
       e.stopPropagation();
     });
 
-    // プリセット選択時にUIを自動で閉じる
     document.querySelectorAll(".preset-chip").forEach(chip => {
       chip.addEventListener("click", () => {
         const start = chip.getAttribute("data-start");
