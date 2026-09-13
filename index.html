@@ -117,7 +117,7 @@
       opacity: 0.9;
     }
 
-    /* 設定ポップアップの配置調整 */
+    /* コンパクト化した設定ポップアップ */
     .color-picker-popover {
       display: none;
       position: absolute;
@@ -127,23 +127,33 @@
       background: #252525;
       border: 1px solid #373737;
       border-radius: 10px;
-      padding: 8px;
+      padding: 6px 8px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
       z-index: 100;
-      width: 170px;
-      height: 105px;
-      flex-direction: column;
+      width: 190px;
+      height: 70px; /* 上下幅を大幅カット (105px -> 70px) */
+      flex-direction: row;
+      align-items: center;
       justify-content: space-between;
+      gap: 6px;
     }
 
     .color-picker-popover.active {
       display: flex;
     }
 
+    .pages-wrapper {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      align-items: center;
+    }
+
     .page {
       display: none;
+      width: 100%;
+      height: 100%;
       flex-direction: column;
-      height: 65px;
       justify-content: center;
     }
 
@@ -156,12 +166,13 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       grid-template-rows: repeat(2, 1fr);
-      gap: 6px;
+      gap: 4px;
+      width: 100%;
     }
 
     .preset-chip {
       width: 100%;
-      height: 26px;
+      height: 24px;
       border-radius: 4px;
       border: 1px solid rgba(255, 255, 255, 0.15);
       cursor: pointer;
@@ -179,8 +190,9 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       height: 100%;
+      width: 100%;
     }
 
     .custom-row {
@@ -188,7 +200,7 @@
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 0 8px;
+      padding: 0 4px;
     }
 
     .custom-row label {
@@ -199,28 +211,33 @@
 
     .custom-row input[type="color"] {
       border: none;
-      width: 24px;
-      height: 24px;
+      width: 22px;
+      height: 22px;
       cursor: pointer;
       background: none;
     }
 
-    /* ナビゲーションバー */
-    .nav-bar {
+    /* 右端に配置した縦型ナビゲーション */
+    .nav-side {
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid #333;
-      padding-top: 3px;
+      height: 100%;
+      width: 32px;
+      border-left: 1px solid #333;
+      padding-left: 5px;
     }
 
     .nav-arrow {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 10px;
+      font-size: 9px;
       color: #aaa;
-      padding: 0 4px;
+      padding: 2px;
+      line-height: 1;
+      transition: color 0.15s ease;
     }
 
     .nav-arrow:hover {
@@ -228,9 +245,13 @@
     }
 
     .nav-indicator {
-      font-size: 10px;
+      font-size: 9px;
       color: #aaa;
       font-weight: bold;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 1px;
+      user-select: none;
     }
 
     #colon {
@@ -259,56 +280,59 @@
       </div>
     </div>
 
-    <!-- 3ページ構成のカラー選択UI -->
+    <!-- 右ナビゲーション採用のコンパクトカラー選択UI -->
     <div class="color-picker-popover" id="picker-popover">
       
-      <!-- ページ1: カスタム指定 -->
-      <div class="page" id="page-1">
-        <div class="custom-colors-page">
-          <div class="custom-row">
-            <label>開始色</label>
-            <input type="color" id="color-start" value="#00c6ff">
+      <!-- メインコンテンツエリア -->
+      <div class="pages-wrapper">
+        <!-- ページ1: カスタム指定 -->
+        <div class="page" id="page-1">
+          <div class="custom-colors-page">
+            <div class="custom-row">
+              <label>開始色</label>
+              <input type="color" id="color-start" value="#00c6ff">
+            </div>
+            <div class="custom-row">
+              <label>終了色</label>
+              <input type="color" id="color-end" value="#0072ff">
+            </div>
           </div>
-          <div class="custom-row">
-            <label>終了色</label>
-            <input type="color" id="color-end" value="#0072ff">
+        </div>
+
+        <!-- ページ2: 季節のプリセット -->
+        <div class="page active" id="page-2">
+          <div class="preset-grid-2row">
+            <button class="preset-chip" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);" data-start="#ff9a9e" data-end="#fecfef" title="🌸 桜 (春)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb);" data-start="#a1c4fd" data-end="#c2e9fb" title="🌱 新緑 (春)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #00c6ff, #0072ff);" data-start="#00c6ff" data-end="#0072ff" title="☀️ 快晴 (夏)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #0ba360, #3cba92);" data-start="#0ba360" data-end="#3cba92" title="🌊 深海 (夏)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #ff758c, #ff7eb3);" data-start="#ff758c" data-end="#ff7eb3" title="🍁 紅葉 (秋)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #f7971e, #ffd200);" data-start="#f7971e" data-end="#ffd200" title="🌾 豊穣 (秋)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #83a4d4, #b6fbff);" data-start="#83a4d4" data-end="#b6fbff" title="❄️ 氷雪 (冬)"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #2b5876, #4e4376);" data-start="#2b5876" data-end="#4e4376" title="🌨 霜夜 (冬)"></button>
+          </div>
+        </div>
+
+        <!-- ページ3: 空のプリセット -->
+        <div class="page" id="page-3">
+          <div class="preset-grid-2row">
+            <button class="preset-chip" style="background: linear-gradient(135deg, #ff512f, #f09819);" data-start="#ff512f" data-end="#f09819" title="🌅 朝焼け"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);" data-start="#36d1dc" data-end="#5b86e5" title="🌤 昼空"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #fa709a, #fee140);" data-start="#fa709a" data-end="#fee140" title="🌇 夕焼け"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #3a1c71, #d76d77);" data-start="#3a1c71" data-end="#d76d77" title="🌆 黄昏"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #43e97b, #38f9d7);" data-start="#43e97b" data-end="#38f9d7" title="🌌 茜空"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #0f2027, #203a43);" data-start="#0f2027" data-end="#203a43" title="🌌 星空"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #12c2e9, #c471ed);" data-start="#12c2e9" data-end="#c471ed" title="🌌 極光"></button>
+            <button class="preset-chip" style="background: linear-gradient(135deg, #1f1c2c, #928dab);" data-start="#1f1c2c" data-end="#928dab" title="🌙 月夜"></button>
           </div>
         </div>
       </div>
 
-      <!-- ページ2: 季節のプリセット -->
-      <div class="page active" id="page-2">
-        <div class="preset-grid-2row">
-          <button class="preset-chip" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);" data-start="#ff9a9e" data-end="#fecfef" title="🌸 桜 (春)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb);" data-start="#a1c4fd" data-end="#c2e9fb" title="🌱 新緑 (春)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #00c6ff, #0072ff);" data-start="#00c6ff" data-end="#0072ff" title="☀️ 快晴 (夏)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #0ba360, #3cba92);" data-start="#0ba360" data-end="#3cba92" title="🌊 深海 (夏)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #ff758c, #ff7eb3);" data-start="#ff758c" data-end="#ff7eb3" title="🍁 紅葉 (秋)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #f7971e, #ffd200);" data-start="#f7971e" data-end="#ffd200" title="🌾 豊穣 (秋)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #83a4d4, #b6fbff);" data-start="#83a4d4" data-end="#b6fbff" title="❄️ 氷雪 (冬)"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #2b5876, #4e4376);" data-start="#2b5876" data-end="#4e4376" title="🌨 霜夜 (冬)"></button>
-        </div>
-      </div>
-
-      <!-- ページ3: 空のプリセット -->
-      <div class="page" id="page-3">
-        <div class="preset-grid-2row">
-          <button class="preset-chip" style="background: linear-gradient(135deg, #ff512f, #f09819);" data-start="#ff512f" data-end="#f09819" title="🌅 朝焼け"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);" data-start="#36d1dc" data-end="#5b86e5" title="🌤 昼空"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #fa709a, #fee140);" data-start="#fa709a" data-end="#fee140" title="🌇 夕焼け"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #3a1c71, #d76d77);" data-start="#3a1c71" data-end="#d76d77" title="🌆 黄昏"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #43e97b, #38f9d7);" data-start="#43e97b" data-end="#38f9d7" title="🌌 茜空"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #0f2027, #203a43);" data-start="#0f2027" data-end="#203a43" title="🌌 星空"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #12c2e9, #c471ed);" data-start="#12c2e9" data-end="#c471ed" title="🌌 極光"></button>
-          <button class="preset-chip" style="background: linear-gradient(135deg, #1f1c2c, #928dab);" data-start="#1f1c2c" data-end="#928dab" title="🌙 月夜"></button>
-        </div>
-      </div>
-
-      <!-- ナビゲーションバー -->
-      <div class="nav-bar">
-        <button class="nav-arrow" id="prev-page">◀</button>
+      <!-- 右端の縦型ナビゲーション -->
+      <div class="nav-side">
+        <button class="nav-arrow" id="prev-page" title="前のページ">▲</button>
         <span class="nav-indicator" id="page-indicator">季節</span>
-        <button class="nav-arrow" id="next-page">▶</button>
+        <button class="nav-arrow" id="next-page" title="次のページ">▼</button>
       </div>
 
     </div>
@@ -349,11 +373,13 @@
       document.getElementById("page-indicator").textContent = pageNames[currentPage - 1];
     }
 
+    // 上三角ボタン（前のページへ）
     document.getElementById("prev-page").addEventListener("click", () => {
       const newPage = currentPage > 1 ? currentPage - 1 : totalPages;
       updatePage(newPage);
     });
 
+    // 下三角ボタン（次のページへ）
     document.getElementById("next-page").addEventListener("click", () => {
       const newPage = currentPage < totalPages ? currentPage + 1 : 1;
       updatePage(newPage);
