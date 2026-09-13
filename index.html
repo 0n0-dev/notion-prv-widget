@@ -18,7 +18,7 @@
     :root {
       --grad-start: #00c6ff;
       --grad-end: #0072ff;
-      --bg-color: #ffffffb3;
+      --bg-color: transparent; /* 背景を完全透明に指定 */
     }
 
     * {
@@ -30,6 +30,7 @@
     body {
       font-family: 'Roboto', sans-serif;
       text-align: center;
+      background-color: transparent; /* bodyの背景も透明化 */
     }
 
     .nowtime {
@@ -405,13 +406,13 @@
       e.stopPropagation();
     });
 
-    // プリセットクリック時にUIを閉じる処理を追加
+    // プリセット選択時にUIを自動で閉じる
     document.querySelectorAll(".preset-chip").forEach(chip => {
       chip.addEventListener("click", () => {
         const start = chip.getAttribute("data-start");
         const end = chip.getAttribute("data-end");
         setGradient(start, end);
-        popover.classList.remove("active"); // ポップアップを閉じる
+        popover.classList.remove("active");
       });
     });
 
