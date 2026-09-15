@@ -52,6 +52,11 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
+    /* １列表示時の全体の高さを自動縮小 */
+    body.inline-mode {
+      align-items: center;
+    }
+
     .nowtime {
       width: fit-content;
       margin: 0 auto;
@@ -69,7 +74,7 @@
       flex-direction: row;
       align-items: baseline;
       gap: 12px;
-      padding-right: 25px;
+      padding: 4px 25px 4px 15px;
 
       /* 一列表示時は親全体にグラデーションを接続適用 */
       background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
@@ -540,12 +545,26 @@
       } catch (e) {}
     }
 
+    // 埋め込み先（Notion等）のiframe高さ自動調整リサイズイベント送信
+    function notifyHeightChange() {
+      setTimeout(() => {
+        const height = document.body.scrollHeight;
+        window.parent.postMessage({ frameHeight: height }, "*");
+      }, 50);
+    }
+
     // レイアウト設定の保持・適用
+    function applyLayout(isInline) {
+      nowtimeBox.classList.toggle("inline-layout", isInline);
+      document.body.classList.toggle("inline-mode", isInline);
+      notifyHeightChange();
+    }
+
     function loadSavedLayout() {
       try {
         const isInline = localStorage.getItem(STORAGE_KEY_INLINE) === "true";
         toggleLayout.checked = isInline;
-        nowtimeBox.classList.toggle("inline-layout", isInline);
+        applyLayout(isInline);
       } catch (e) {}
     }
 
@@ -560,7 +579,7 @@
 
     toggleLayout.addEventListener("change", (e) => {
       const isInline = e.target.checked;
-      nowtimeBox.classList.toggle("inline-layout", isInline);
+      applyLayout(isInline);
       try {
         localStorage.setItem(STORAGE_KEY_INLINE, isInline);
       } catch (e) {}
@@ -581,10 +600,14 @@
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       popover.classList.toggle("active");
+      notifyHeightChange();
     });
 
     document.addEventListener("click", () => {
-      popover.classList.remove("active");
+      if (popover.classList.contains("active")) {
+        popover.classList.remove("active");
+        notifyHeightChange();
+      }
     });
 
     popover.addEventListener("click", (e) => {
@@ -597,6 +620,7 @@
         const end = chip.getAttribute("data-end");
         setGradient(start, end);
         popover.classList.remove("active");
+        notifyHeightChange();
       });
     });
 
