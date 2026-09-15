@@ -52,11 +52,6 @@
       transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* １列表示時の全体の高さを自動縮小 */
-    body.inline-mode {
-      align-items: center;
-    }
-
     .nowtime {
       width: fit-content;
       margin: 0 auto;
@@ -74,7 +69,7 @@
       flex-direction: row;
       align-items: baseline;
       gap: 12px;
-      padding: 4px 25px 4px 15px;
+      padding-right: 25px;
 
       /* 一列表示時は親全体にグラデーションを接続適用 */
       background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
@@ -94,10 +89,10 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の時間（時・分）のサイズ調整＆子要素の個別グラデーション解除 */
+    /* 一列表示時の時間（文字サイズ42px、個別グラデーション解除） */
     .nowtime.inline-layout #time {
-      font-size: 24px;
-      line-height: 28px;
+      font-size: 42px;
+      line-height: 48px;
       background: none;
       -webkit-background-clip: initial;
       -webkit-text-fill-color: inherit;
@@ -152,8 +147,10 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の日付の個別グラデーション解除 */
+    /* 一列表示時の日付（文字サイズを42pxに変更＆個別グラデーション解除） */
     .nowtime.inline-layout #date {
+      font-size: 42px;
+      line-height: 48px;
       background: none;
       -webkit-background-clip: initial;
       -webkit-text-fill-color: inherit;
@@ -545,26 +542,12 @@
       } catch (e) {}
     }
 
-    // 埋め込み先（Notion等）のiframe高さ自動調整リサイズイベント送信
-    function notifyHeightChange() {
-      setTimeout(() => {
-        const height = document.body.scrollHeight;
-        window.parent.postMessage({ frameHeight: height }, "*");
-      }, 50);
-    }
-
     // レイアウト設定の保持・適用
-    function applyLayout(isInline) {
-      nowtimeBox.classList.toggle("inline-layout", isInline);
-      document.body.classList.toggle("inline-mode", isInline);
-      notifyHeightChange();
-    }
-
     function loadSavedLayout() {
       try {
         const isInline = localStorage.getItem(STORAGE_KEY_INLINE) === "true";
         toggleLayout.checked = isInline;
-        applyLayout(isInline);
+        nowtimeBox.classList.toggle("inline-layout", isInline);
       } catch (e) {}
     }
 
@@ -579,7 +562,7 @@
 
     toggleLayout.addEventListener("change", (e) => {
       const isInline = e.target.checked;
-      applyLayout(isInline);
+      nowtimeBox.classList.toggle("inline-layout", isInline);
       try {
         localStorage.setItem(STORAGE_KEY_INLINE, isInline);
       } catch (e) {}
@@ -600,14 +583,10 @@
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       popover.classList.toggle("active");
-      notifyHeightChange();
     });
 
     document.addEventListener("click", () => {
-      if (popover.classList.contains("active")) {
-        popover.classList.remove("active");
-        notifyHeightChange();
-      }
+      popover.classList.remove("active");
     });
 
     popover.addEventListener("click", (e) => {
@@ -620,7 +599,6 @@
         const end = chip.getAttribute("data-end");
         setGradient(start, end);
         popover.classList.remove("active");
-        notifyHeightChange();
       });
     });
 
