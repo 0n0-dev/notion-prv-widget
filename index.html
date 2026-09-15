@@ -56,12 +56,10 @@
       width: fit-content;
       margin: 0 auto;
       padding: 0 15px 7px 15px;
-      border-radius: 10px;
-      background-color: var(--bg-color);
       position: relative;
       display: flex;
       flex-direction: column;
-      transition: background-color 0.2s ease;
+      background: transparent; /* ボックス背景を透明に修正 */
     }
 
     /* 一列表示用のCSS */
@@ -89,7 +87,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の時間（文字サイズ42px、個別グラデーション解除） */
+    /* 一列表示時の時間 */
     .nowtime.inline-layout #time {
       font-size: 42px;
       line-height: 48px;
@@ -147,7 +145,7 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の日付（文字サイズを42pxに変更＆個別グラデーション解除） */
+    /* 一列表示時の日付（文字サイズ42px） */
     .nowtime.inline-layout #date {
       font-size: 42px;
       line-height: 48px;
@@ -180,11 +178,11 @@
       opacity: 0.9;
     }
 
-    /* 設定ポップアップ：常に時計の下側に表示されるよう位置を設定 */
+    /* 設定ポップアップ */
     .color-picker-popover {
       display: none;
       position: absolute;
-      top: calc(100% + 8px); /* 時計の下端から8px下に配置 */
+      top: calc(100% + 8px);
       left: 50%;
       transform: translateX(-50%);
       background: #252525;
@@ -200,7 +198,6 @@
       justify-content: space-between;
       gap: 6px;
 
-      /* 親要素の文字透過の影響を回避 */
       -webkit-text-fill-color: initial;
     }
 
