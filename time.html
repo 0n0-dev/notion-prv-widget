@@ -18,11 +18,10 @@
     :root {
       --grad-start: #00c6ff;
       --grad-end: #0072ff;
-      --bg-color: #191919; /* デフォルトのダークモード背景色 */
+      --bg-color: #191919;
       --text-color: #ffffff;
     }
 
-    /* 白背景モード用スタイルの拡張 */
     body.light-mode {
       --bg-color: #ffffff;
       --text-color: #333333;
@@ -34,7 +33,6 @@
       box-sizing: border-box;
     }
 
-    /* 画面全体でスクロールバーを完全に消去 */
     html, body {
       width: 100%;
       height: 100%;
@@ -59,20 +57,14 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      background: transparent; /* ボックス背景を透明に修正 */
+      background: transparent;
     }
 
-    /* 一列表示用のCSS */
     .nowtime.inline-layout {
       flex-direction: row;
       align-items: baseline;
       gap: 12px;
       padding-right: 25px;
-
-      /* 一列表示時は親全体にグラデーションを接続適用 */
-      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
 
     #time {
@@ -87,13 +79,9 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の時間 */
     .nowtime.inline-layout #time {
       font-size: 42px;
       line-height: 48px;
-      background: none;
-      -webkit-background-clip: initial;
-      -webkit-text-fill-color: inherit;
     }
 
     #sec {
@@ -102,12 +90,7 @@
       margin-left: 2px;
       vertical-align: baseline;
       display: inline-block;
-    }
-
-    /* 一列表示時でも秒数のサイズを18pxに維持 */
-    .nowtime.inline-layout #sec {
-      font-size: 18px;
-      line-height: 18px;
+      -webkit-text-fill-color: inherit;
     }
 
     #date-container {
@@ -118,18 +101,15 @@
       align-items: center;
       justify-content: center;
       position: relative;
-
       border-top: 2px solid transparent;
       border-image: linear-gradient(90deg, var(--grad-start), var(--grad-end)) 1;
     }
 
-    /* 一列表示時の日付コンテナ調整（区切りライン削除） */
     .nowtime.inline-layout #date-container {
       width: auto;
       padding-top: 0;
       margin-top: 0;
       border-top: none;
-      border-left: none;
       border-image: none;
       padding-left: 0;
     }
@@ -139,19 +119,14 @@
       line-height: 28px;
       white-space: nowrap;
       letter-spacing: 2px;
-
       background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の日付（文字サイズ42px） */
     .nowtime.inline-layout #date {
       font-size: 42px;
       line-height: 48px;
-      background: none;
-      -webkit-background-clip: initial;
-      -webkit-text-fill-color: inherit;
     }
 
     .color-btn-wrapper {
@@ -159,8 +134,6 @@
       right: -24px;
       display: flex;
       align-items: center;
-
-      /* 親要素の文字透過の影響を回避 */
       -webkit-text-fill-color: initial;
     }
 
@@ -178,7 +151,6 @@
       opacity: 0.9;
     }
 
-    /* 設定ポップアップ */
     .color-picker-popover {
       display: none;
       position: absolute;
@@ -197,7 +169,6 @@
       align-items: center;
       justify-content: space-between;
       gap: 6px;
-
       -webkit-text-fill-color: initial;
     }
 
@@ -224,7 +195,6 @@
       display: flex;
     }
 
-    /* 2行（横4列×縦2行）グリッド */
     .preset-grid-2row {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -247,7 +217,6 @@
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
     }
 
-    /* カスタム色設定 */
     .custom-colors-page {
       display: flex;
       flex-direction: column;
@@ -280,7 +249,6 @@
       background: none;
     }
 
-    /* トグルスイッチスタイル */
     .switch {
       position: relative;
       display: inline-block;
@@ -323,7 +291,6 @@
       transform: translateX(12px);
     }
 
-    /* 右端に配置した縦型ナビゲーション */
     .nav-side {
       display: flex;
       flex-direction: column;
@@ -360,21 +327,22 @@
       user-select: none;
     }
 
+    /* コロンの点滅アニメーション修正 */
     #colon {
       margin: 0 2px;
       vertical-align: 8%;
-      animation: 1s linear infinite blink;
+      display: inline-block;
+      animation: blink 1s steps(1, start) infinite;
     }
 
     @keyframes blink {
-      0%, 49% { opacity: 1; }
-      100%, 50% { opacity: 0; }
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
     }
   </style>
 </head>
 <body>
 
-  <!-- 時計表示エリア -->
   <div class="nowtime" id="nowtime-box">
     <div id="time"></div>
     
@@ -386,12 +354,8 @@
       </div>
     </div>
 
-    <!-- 設定ポップアップUI -->
     <div class="color-picker-popover" id="picker-popover">
-      
-      <!-- メインコンテンツエリア -->
       <div class="pages-wrapper">
-        <!-- ページ1: レイアウト設定 -->
         <div class="page" id="page-1">
           <div class="custom-colors-page">
             <div class="custom-row">
@@ -411,7 +375,6 @@
           </div>
         </div>
 
-        <!-- ページ2: カスタム指定 -->
         <div class="page" id="page-2">
           <div class="custom-colors-page">
             <div class="custom-row">
@@ -425,7 +388,6 @@
           </div>
         </div>
 
-        <!-- ページ3: 季節のプリセット -->
         <div class="page active" id="page-3">
           <div class="preset-grid-2row">
             <button class="preset-chip" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);" data-start="#ff9a9e" data-end="#fecfef" title="🌸 桜 (春)"></button>
@@ -439,7 +401,6 @@
           </div>
         </div>
 
-        <!-- ページ4: 空のプリセット -->
         <div class="page" id="page-4">
           <div class="preset-grid-2row">
             <button class="preset-chip" style="background: linear-gradient(135deg, #ff512f, #f09819);" data-start="#ff512f" data-end="#f09819" title="🌅 朝焼け"></button>
@@ -454,17 +415,14 @@
         </div>
       </div>
 
-      <!-- 右端の縦型ナビゲーション -->
       <div class="nav-side">
         <button class="nav-arrow" id="prev-page" title="前のページ">▲</button>
         <span class="nav-indicator" id="page-indicator">季節</span>
         <button class="nav-arrow" id="next-page" title="次のページ">▼</button>
       </div>
-
     </div>
   </div>
 
-  <!-- 時計の動作スクリプト -->
   <script>
     const day = function() {
       const n = dayjs(new Date());
@@ -491,7 +449,6 @@
     const STORAGE_KEY_INLINE = "mc_clock_inline_layout";
     const STORAGE_KEY_LIGHT_BG = "mc_clock_light_bg";
 
-    // ページ名定義
     const pageNames = ["表示", "カスタム", "季節", "空"];
     let currentPage = 3;
     const totalPages = 4;
@@ -504,13 +461,11 @@
       document.getElementById("page-indicator").textContent = pageNames[currentPage - 1];
     }
 
-    // 上三角ボタン（前のページへ）
     document.getElementById("prev-page").addEventListener("click", () => {
       const newPage = currentPage > 1 ? currentPage - 1 : totalPages;
       updatePage(newPage);
     });
 
-    // 下三角ボタン（次のページへ）
     document.getElementById("next-page").addEventListener("click", () => {
       const newPage = currentPage < totalPages ? currentPage + 1 : 1;
       updatePage(newPage);
@@ -532,14 +487,12 @@
       try {
         const savedStart = localStorage.getItem(STORAGE_KEY_START);
         const savedEnd = localStorage.getItem(STORAGE_KEY_END);
-
         if (savedStart && savedEnd) {
           setGradient(savedStart, savedEnd);
         }
       } catch (e) {}
     }
 
-    // レイアウト設定の保持・適用
     function loadSavedLayout() {
       try {
         const isInline = localStorage.getItem(STORAGE_KEY_INLINE) === "true";
@@ -548,7 +501,6 @@
       } catch (e) {}
     }
 
-    // 背景色設定の保持・適用
     function loadSavedBg() {
       try {
         const isLight = localStorage.getItem(STORAGE_KEY_LIGHT_BG) === "true";
