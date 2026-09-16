@@ -3,18 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GitHub Style Habit Tracker</title>
+<title>Habit Tracker</title>
 <style>
   :root {
-    --bg-color: #0d1117;
-    --card-bg: #161b22;
-    --border-color: #30363d;
-    --text-color: #c9d1d9;
-    --text-sub: #8b949e;
-    --color-empty: #161b22;
-    --color-empty-border: #21262d;
-    --color-filled: #39d353;
-    --color-filled-border: #26a641;
+    --bg-color: #191919;            /* Notion Dark Background */
+    --card-bg: #202020;             /* Notion Card / Component Background */
+    --border-color: #2f2f2f;         /* Notion Subtle Border */
+    --text-color: #d4d4d4;           /* Notion Main Text */
+    --text-sub: #787774;             /* Notion Sub Text */
+    --color-empty: #252525;
+    --color-empty-border: #2f2f2f;
+    --color-filled: #2eaadc;         /* Notion Accent Blue */
+    --color-filled-border: #258db8;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -24,66 +24,161 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     padding: 16px;
     font-size: 14px;
+    position: relative;
+    overflow-x: hidden;
   }
 
   /* ヘッダー */
   .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-bottom: 16px;
     padding-bottom: 8px;
     border-bottom: 1px solid var(--border-color);
   }
-  .title {
-    font-size: 16px;
-    font-weight: 600;
-  }
   .controls {
     display: flex;
-    gap: 8px;
+    gap: 10px;
   }
   .icon-btn {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     color: var(--text-color);
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 16px;
     font-weight: bold;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s;
   }
   .icon-btn:hover {
-    background: #21262d;
-    border-color: #8b949e;
+    background: #2a2a2a;
+    border-color: #3f3f3f;
+  }
+  .icon-btn:active {
+    transform: scale(0.95);
   }
   .icon-btn.active {
-    background: #1f6feb;
-    border-color: #388bfd;
+    background: #2eaadc;
+    border-color: #2eaadc;
     color: white;
   }
+
+  /* 設定サイドバー */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 150;
+    backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open {
+    display: block;
+  }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 280px;
+    height: 100%;
+    background: var(--card-bg);
+    border-left: 1px solid var(--border-color);
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px;
+    z-index: 200;
+    padding: 24px;
+    transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+  }
+  .sidebar.open {
+    right: 0;
+  }
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+  }
+  .sidebar-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #e3e3e3;
+  }
+  .close-btn {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    color: var(--text-sub);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .close-btn:hover { color: var(--text-color); border-color: #444; }
+
+  /* トグルスイッチ */
+  .setting-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+  }
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #333;
+    transition: .2s;
+    border-radius: 22px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background-color: #e3e3e3;
+    transition: .2s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: #2eaadc; }
+  input:checked + .slider:before { transform: translateX(18px); background-color: #fff; }
 
   /* クイックチェックパネル */
   #quick-check-panel {
     display: none;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 12px;
+    border-radius: 16px;
+    padding: 14px;
     margin-bottom: 16px;
   }
-  #quick-check-panel.open {
-    display: block;
-  }
+  #quick-check-panel.open { display: block; }
   .quick-check-title {
     font-size: 12px;
     color: var(--text-sub);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
   .quick-check-list {
     display: flex;
@@ -96,16 +191,17 @@
     gap: 6px;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
-    padding: 4px 10px;
+    padding: 6px 14px;
     border-radius: 20px;
     cursor: pointer;
     user-select: none;
     font-size: 13px;
+    transition: background 0.2s, border-color 0.2s;
   }
   .quick-check-item.checked {
-    border-color: var(--color-filled-border);
-    background: rgba(57, 211, 83, 0.15);
-    color: #56d364;
+    border-color: #2eaadc;
+    background: rgba(46, 170, 220, 0.15);
+    color: #45b7e5;
   }
 
   /* トラッカー一覧 */
@@ -116,36 +212,32 @@
     position: relative;
   }
 
-  /* カードスタイル & アニメーション関連 */
+  /* カードスタイル & アニメーション */
   .tracker-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 6px;
-    padding: 12px;
+    border-radius: 16px;
+    padding: 14px;
     position: relative;
     will-change: transform;
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
   }
-
   .tracker-card.dragging {
     opacity: 0.3;
     border: 1px dashed var(--text-sub);
   }
-
   .tracker-card.drag-over {
-    border-color: #388bfd;
-    box-shadow: 0 0 10px rgba(56, 139, 253, 0.3);
+    border-color: #2eaadc;
+    box-shadow: 0 0 12px rgba(46, 170, 220, 0.25);
   }
 
   .tracker-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
-  .tracker-name {
-    font-weight: 600;
-  }
+  .tracker-name { font-weight: 600; color: #e3e3e3; }
   .tracker-header-actions {
     display: flex;
     align-items: center;
@@ -156,15 +248,12 @@
     color: var(--text-sub);
     cursor: grab;
     font-size: 16px;
-    padding: 0 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
     user-select: none;
   }
-  .drag-handle:active {
-    cursor: grabbing;
-  }
-  .drag-handle:hover {
-    color: var(--text-color);
-  }
+  .drag-handle:active { cursor: grabbing; }
+  .drag-handle:hover { color: var(--text-color); background: rgba(255,255,255,0.05); }
 
   /* 草グラフ構造 */
   .tracker-body {
@@ -192,10 +281,9 @@
     flex-direction: column;
     overflow: hidden;
     width: 100%;
-    align-items: flex-end; /* 右端（当日）固定 */
+    align-items: flex-end;
   }
 
-  /* 月ラベルグリッド */
   .month-labels {
     display: grid;
     grid-template-columns: repeat(53, 10px);
@@ -207,12 +295,8 @@
     user-select: none;
     width: max-content;
   }
-  .month-label {
-    grid-row: 1;
-    white-space: nowrap;
-  }
+  .month-label { grid-row: 1; white-space: nowrap; }
 
-  /* 草グリッド */
   .grid {
     display: grid;
     grid-template-rows: repeat(7, 10px);
@@ -226,11 +310,33 @@
     height: 10px;
     background-color: var(--color-empty);
     border: 1px solid var(--color-empty-border);
-    border-radius: 2px;
+    border-radius: 3px;
   }
   .day-block.filled {
     background-color: var(--color-filled);
     border-color: var(--color-filled-border);
+  }
+
+  /* 2週間1列表示モード用スタイル調整 */
+  .mode-2weeks .weekday-labels,
+  .mode-2weeks .month-labels,
+  .mode-2weeks .drag-handle {
+    display: none !important;
+  }
+  .mode-2weeks .grid {
+    display: flex !important;
+    flex-direction: row;
+    gap: 5px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .mode-2weeks .tracker-body {
+    padding-bottom: 0;
+  }
+  .mode-2weeks .day-block {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
   }
 
   /* モーダル */
@@ -239,27 +345,32 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
     align-items: center;
     justify-content: center;
-    z-index: 100;
+    z-index: 300;
   }
   .modal {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 16px;
-    width: 280px;
+    border-radius: 20px;
+    padding: 20px;
+    width: 300px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   }
-  .modal h3 { margin-bottom: 12px; font-size: 14px; }
+  .modal h3 { margin-bottom: 14px; font-size: 15px; color: #e3e3e3; }
   .modal input {
     width: 100%;
-    padding: 8px;
+    padding: 10px 14px;
     background: var(--bg-color);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: 10px;
     color: var(--text-color);
-    margin-bottom: 12px;
+    margin-bottom: 16px;
+    outline: none;
+  }
+  .modal input:focus {
+    border-color: #2eaadc;
   }
   .modal-actions {
     display: flex;
@@ -267,21 +378,45 @@
     gap: 8px;
   }
   .modal-actions button {
-    padding: 6px 12px;
-    border-radius: 4px;
+    padding: 8px 16px;
+    border-radius: 10px;
     border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
     cursor: pointer;
+    font-size: 13px;
   }
-  .btn-primary { background: #238636; color: white; border: none !important; }
+  .modal-actions button:hover {
+    background: #2a2a2a;
+  }
+  .btn-primary { background: #2eaadc !important; color: white !important; border: none !important; }
+  .btn-primary:hover { background: #258db8 !important; }
 </style>
 </head>
 <body>
 
+  <!-- ヘッダー -->
   <div class="header">
-    <div class="title">Habit Tracker</div>
     <div class="controls">
       <button class="icon-btn" id="toggle-check-btn" title="今日の完了確認">✓</button>
       <button class="icon-btn" id="add-tracker-btn" title="トラッカーの追加">＋</button>
+      <button class="icon-btn" id="open-sidebar-btn" title="設定">⚙️</button>
+    </div>
+  </div>
+
+  <!-- 設定サイドバー -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title">設定</span>
+      <button class="close-btn" id="close-sidebar-btn">✕</button>
+    </div>
+    <div class="setting-item">
+      <span>2週間コンパクト表示</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle-2weeks-mode">
+        <span class="slider"></span>
+      </label>
     </div>
   </div>
 
@@ -305,12 +440,19 @@
 
 <script>
   let trackers = JSON.parse(localStorage.getItem('github-trackers') || '[]');
+  let is2WeeksMode = localStorage.getItem('github-tracker-2weeks') === 'true';
 
   const trackerListEl = document.getElementById('tracker-list');
   const quickCheckPanel = document.getElementById('quick-check-panel');
   const quickCheckList = document.getElementById('quick-check-list');
   const toggleCheckBtn = document.getElementById('toggle-check-btn');
   const addTrackerBtn = document.getElementById('add-tracker-btn');
+  const openSidebarBtn = document.getElementById('open-sidebar-btn');
+  const closeSidebarBtn = document.getElementById('close-sidebar-btn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+  const toggle2WeeksModeInput = document.getElementById('toggle-2weeks-mode');
+  
   const modal = document.getElementById('modal');
   const trackerNameInput = document.getElementById('tracker-name-input');
   const saveBtn = document.getElementById('save-btn');
@@ -340,8 +482,8 @@
 
     trackers.forEach((t) => {
       const card = document.createElement('div');
-      card.className = 'tracker-card';
-      card.draggable = true;
+      card.className = 'tracker-card' + (is2WeeksMode ? ' mode-2weeks' : '');
+      card.draggable = !is2WeeksMode;
       card.dataset.id = t.id;
 
       const isTodayDone = !!t.history[todayStr];
@@ -364,54 +506,68 @@
         </div>
       `;
 
-      setupDragEvents(card, t.id);
+      if (!is2WeeksMode) {
+        setupDragEvents(card, t.id);
+      }
+      
       trackerListEl.appendChild(card);
 
       const gridEl = card.querySelector(`#grid-${t.id}`);
       const monthLabelsEl = card.querySelector(`#month-labels-${t.id}`);
-
-      const weeksCount = 53;
       const today = new Date();
-      const currentMondayIndex = (today.getDay() + 6) % 7;
-      
-      // 起点となる53週間前の月曜日
-      const startDate = new Date(today);
-      startDate.setDate(today.getDate() - currentMondayIndex - ((weeksCount - 1) * 7));
 
-      let lastMonth = -1;
-
-      // 日付グリッド描画 & 月ラベル位置の精密判定
-      for (let week = 0; week < weeksCount; week++) {
-        for (let day = 0; day < 7; day++) {
-          const d = new Date(startDate);
-          d.setDate(startDate.getDate() + (week * 7) + day);
-
-          if (d > today) {
-            const emptyBlock = document.createElement('div');
-            emptyBlock.style.width = '10px';
-            emptyBlock.style.height = '10px';
-            emptyBlock.style.visibility = 'hidden';
-            gridEl.appendChild(emptyBlock);
-            continue;
-          }
-
+      if (is2WeeksMode) {
+        // --- 2週間（14日間）1列表示モード ---
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
           const dateStr = d.toISOString().split('T')[0];
-          const monthNum = d.getMonth() + 1;
-
-          // その月で初めて登場した日に月ラベルを配置
-          if (monthNum !== lastMonth) {
-            const monthLabel = document.createElement('div');
-            monthLabel.className = 'month-label';
-            monthLabel.style.gridColumn = week + 1; // 該当週の列へ指定
-            monthLabel.textContent = `${monthNum}月`;
-            monthLabelsEl.appendChild(monthLabel);
-            lastMonth = monthNum;
-          }
 
           const block = document.createElement('div');
           block.className = 'day-block' + (t.history[dateStr] ? ' filled' : '');
           block.title = `${dateStr}: ${t.history[dateStr] ? '完了' : '未完了'}`;
           gridEl.appendChild(block);
+        }
+      } else {
+        // --- 通常（53週）表示モード ---
+        const weeksCount = 53;
+        const currentMondayIndex = (today.getDay() + 6) % 7;
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - currentMondayIndex - ((weeksCount - 1) * 7));
+
+        let lastMonth = -1;
+
+        for (let week = 0; week < weeksCount; week++) {
+          for (let day = 0; day < 7; day++) {
+            const d = new Date(startDate);
+            d.setDate(startDate.getDate() + (week * 7) + day);
+
+            if (d > today) {
+              const emptyBlock = document.createElement('div');
+              emptyBlock.style.width = '10px';
+              emptyBlock.style.height = '10px';
+              emptyBlock.style.visibility = 'hidden';
+              gridEl.appendChild(emptyBlock);
+              continue;
+            }
+
+            const dateStr = d.toISOString().split('T')[0];
+            const monthNum = d.getMonth() + 1;
+
+            if (monthNum !== lastMonth) {
+              const monthLabel = document.createElement('div');
+              monthLabel.className = 'month-label';
+              monthLabel.style.gridColumn = week + 1;
+              monthLabel.textContent = `${monthNum}月`;
+              monthLabelsEl.appendChild(monthLabel);
+              lastMonth = monthNum;
+            }
+
+            const block = document.createElement('div');
+            block.className = 'day-block' + (t.history[dateStr] ? ' filled' : '');
+            block.title = `${dateStr}: ${t.history[dateStr] ? '完了' : '未完了'}`;
+            gridEl.appendChild(block);
+          }
         }
       }
 
@@ -521,6 +677,28 @@
     saveState();
     render();
   }
+
+  /* サイドバー操作 */
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+  }
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+  }
+
+  openSidebarBtn.onclick = openSidebar;
+  closeSidebarBtn.onclick = closeSidebar;
+  sidebarOverlay.onclick = closeSidebar;
+
+  // 2週間表示切り替え
+  toggle2WeeksModeInput.checked = is2WeeksMode;
+  toggle2WeeksModeInput.onchange = (e) => {
+    is2WeeksMode = e.target.checked;
+    localStorage.setItem('github-tracker-2weeks', is2WeeksMode);
+    render();
+  };
 
   toggleCheckBtn.onclick = () => {
     quickCheckPanel.classList.toggle('open');
