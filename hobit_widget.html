@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GitHub Style Habit Tracker</title>
+<style>
+  :root {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --border-color: #30363d;
+    --text-color: #c9d1d9;
+    --text-sub: #8b949e;
+    --color-empty: #161b22;
+    --color-empty-border: #21262d;
+    --color-filled: #39d353;
+    --color-filled-border: #26a641;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 16px;
+    font-size: 14px;
+  }
+
+  /* ヘッダー */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+  }
+  .icon-btn {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .icon-btn:hover {
+    background: #21262d;
+    border-color: #8b949e;
+  }
+  .icon-btn.active {
+    background: #1f6feb;
+    border-color: #388bfd;
+    color: white;
+  }
+
+  /* クイックチェックパネル */
+  #quick-check-panel {
+    display: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  #quick-check-panel.open {
+    display: block;
+  }
+  .quick-check-title {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+  }
+  .quick-check-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .quick-check-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    padding: 4px 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 13px;
+  }
+  .quick-check-item.checked {
+    border-color: var(--color-filled-border);
+    background: rgba(57, 211, 83, 0.15);
+    color: #56d364;
+  }
+
+  /* トラッカー一覧 */
+  .tracker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+  }
+
+  /* カードスタイル & アニメーション関連 */
+  .tracker-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 12px;
+    position: relative;
+    will-change: transform;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .tracker-card.dragging {
+    opacity: 0.3;
+    border: 1px dashed var(--text-sub);
+  }
+
+  .tracker-card.drag-over {
+    border-color: #388bfd;
+    box-shadow: 0 0 10px rgba(56, 139, 253, 0.3);
+  }
+
+  .tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .tracker-name {
+    font-weight: 600;
+  }
+  .tracker-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .drag-handle {
+    color: var(--text-sub);
+    cursor: grab;
+    font-size: 16px;
+    padding: 0 4px;
+    user-select: none;
+  }
+  .drag-handle:active {
+    cursor: grabbing;
+  }
+  .drag-handle:hover {
+    color: var(--text-color);
+  }
+
+  /* 草グラフ構造 */
+  .tracker-body {
+    display: flex;
+    overflow: hidden;
+    padding-bottom: 4px;
+  }
+
+  .weekday-labels {
+    display: grid;
+    grid-template-rows: repeat(7, 10px);
+    gap: 3px;
+    margin-top: 18px;
+    margin-right: 6px;
+    font-size: 9px;
+    color: var(--text-sub);
+    line-height: 10px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .weekday-labels div { height: 10px; }
+
+  .graph-container {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+    align-items: flex-end; /* 右端（当日）固定 */
+  }
+
+  /* 月ラベルグリッド */
+  .month-labels {
+    display: grid;
+    grid-template-columns: repeat(53, 10px);
+    gap: 3px;
+    height: 15px;
+    margin-bottom: 3px;
+    font-size: 10px;
+    color: var(--text-sub);
+    user-select: none;
+    width: max-content;
+  }
+  .month-label {
+    grid-row: 1;
+    white-space: nowrap;
+  }
+
+  /* 草グリッド */
+  .grid {
+    display: grid;
+    grid-template-rows: repeat(7, 10px);
+    grid-template-columns: repeat(53, 10px);
+    grid-auto-flow: column;
+    gap: 3px;
+    width: max-content;
+  }
+  .day-block {
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-empty);
+    border: 1px solid var(--color-empty-border);
+    border-radius: 2px;
+  }
+  .day-block.filled {
+    background-color: var(--color-filled);
+    border-color: var(--color-filled-border);
+  }
+
+  /* モーダル */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    width: 280px;
+  }
+  .modal h3 { margin-bottom: 12px; font-size: 14px; }
+  .modal input {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    margin-bottom: 12px;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .modal-actions button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+  }
+  .btn-primary { background: #238636; color: white; border: none !important; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title">Habit Tracker</div>
+    <div class="controls">
+      <button class="icon-btn" id="toggle-check-btn" title="今日の完了確認">✓</button>
+      <button class="icon-btn" id="add-tracker-btn" title="トラッカーの追加">＋</button>
+    </div>
+  </div>
+
+  <div id="quick-check-panel">
+    <div class="quick-check-title">今日のタスク完了を記録:</div>
+    <div class="quick-check-list" id="quick-check-list"></div>
+  </div>
+
+  <div class="tracker-list" id="tracker-list"></div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h3>新しいトラッカーを追加</h3>
+      <input type="text" id="tracker-name-input" placeholder="習慣の名前 (例: 読書)" maxlength="25">
+      <div class="modal-actions">
+        <button id="cancel-btn">キャンセル</button>
+        <button class="btn-primary" id="save-btn">追加</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  let trackers = JSON.parse(localStorage.getItem('github-trackers') || '[]');
+
+  const trackerListEl = document.getElementById('tracker-list');
+  const quickCheckPanel = document.getElementById('quick-check-panel');
+  const quickCheckList = document.getElementById('quick-check-list');
+  const toggleCheckBtn = document.getElementById('toggle-check-btn');
+  const addTrackerBtn = document.getElementById('add-tracker-btn');
+  const modal = document.getElementById('modal');
+  const trackerNameInput = document.getElementById('tracker-name-input');
+  const saveBtn = document.getElementById('save-btn');
+  const cancelBtn = document.getElementById('cancel-btn');
+
+  let draggedCard = null;
+  let draggedId = null;
+
+  function getTodayString() {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  function saveState() {
+    localStorage.setItem('github-trackers', JSON.stringify(trackers));
+  }
+
+  function render() {
+    trackerListEl.innerHTML = '';
+    quickCheckList.innerHTML = '';
+
+    const todayStr = getTodayString();
+
+    if(trackers.length === 0) {
+      trackerListEl.innerHTML = '<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">右上ボタンからトラッカーを追加してください</div>';
+    }
+
+    trackers.forEach((t) => {
+      const card = document.createElement('div');
+      card.className = 'tracker-card';
+      card.draggable = true;
+      card.dataset.id = t.id;
+
+      const isTodayDone = !!t.history[todayStr];
+
+      card.innerHTML = `
+        <div class="tracker-header">
+          <span class="tracker-name">${t.name}</span>
+          <div class="tracker-header-actions">
+            <span class="drag-handle" title="ドラッグして並べ替え">≡</span>
+          </div>
+        </div>
+        <div class="tracker-body">
+          <div class="weekday-labels">
+            <div>月</div><div></div><div>水</div><div></div><div>金</div><div></div><div>日</div>
+          </div>
+          <div class="graph-container">
+            <div class="month-labels" id="month-labels-${t.id}"></div>
+            <div class="grid" id="grid-${t.id}"></div>
+          </div>
+        </div>
+      `;
+
+      setupDragEvents(card, t.id);
+      trackerListEl.appendChild(card);
+
+      const gridEl = card.querySelector(`#grid-${t.id}`);
+      const monthLabelsEl = card.querySelector(`#month-labels-${t.id}`);
+
+      const weeksCount = 53;
+      const today = new Date();
+      const currentMondayIndex = (today.getDay() + 6) % 7;
+      
+      // 起点となる53週間前の月曜日
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() - currentMondayIndex - ((weeksCount - 1) * 7));
+
+      let lastMonth = -1;
+
+      // 日付グリッド描画 & 月ラベル位置の精密判定
+      for (let week = 0; week < weeksCount; week++) {
+        for (let day = 0; day < 7; day++) {
+          const d = new Date(startDate);
+          d.setDate(startDate.getDate() + (week * 7) + day);
+
+          if (d > today) {
+            const emptyBlock = document.createElement('div');
+            emptyBlock.style.width = '10px';
+            emptyBlock.style.height = '10px';
+            emptyBlock.style.visibility = 'hidden';
+            gridEl.appendChild(emptyBlock);
+            continue;
+          }
+
+          const dateStr = d.toISOString().split('T')[0];
+          const monthNum = d.getMonth() + 1;
+
+          // その月で初めて登場した日に月ラベルを配置
+          if (monthNum !== lastMonth) {
+            const monthLabel = document.createElement('div');
+            monthLabel.className = 'month-label';
+            monthLabel.style.gridColumn = week + 1; // 該当週の列へ指定
+            monthLabel.textContent = `${monthNum}月`;
+            monthLabelsEl.appendChild(monthLabel);
+            lastMonth = monthNum;
+          }
+
+          const block = document.createElement('div');
+          block.className = 'day-block' + (t.history[dateStr] ? ' filled' : '');
+          block.title = `${dateStr}: ${t.history[dateStr] ? '完了' : '未完了'}`;
+          gridEl.appendChild(block);
+        }
+      }
+
+      const checkItem = document.createElement('div');
+      checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
+      checkItem.innerHTML = `<span>${isTodayDone ? '✓' : '○'}</span> <span>${t.name}</span>`;
+      checkItem.onclick = () => toggleToday(t.id);
+      quickCheckList.appendChild(checkItem);
+    });
+  }
+
+  function setupDragEvents(card, id) {
+    card.addEventListener('dragstart', (e) => {
+      draggedCard = card;
+      draggedId = id;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      document.querySelectorAll('.tracker-card').forEach(c => c.classList.remove('drag-over'));
+      draggedCard = null;
+      draggedId = null;
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (card !== draggedCard) {
+        card.classList.add('drag-over');
+      }
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over');
+    });
+
+    card.addEventListener('drop', (e) => {
+      e.preventDefault();
+      card.classList.remove('drag-over');
+
+      if (draggedCard && card !== draggedCard) {
+        const fromIndex = trackers.findIndex(t => t.id === draggedId);
+        const toIndex = trackers.findIndex(t => t.id === id);
+
+        if (fromIndex !== -1 && toIndex !== -1) {
+          const cardsBefore = Array.from(document.querySelectorAll('.tracker-card'));
+          const firstPositions = new Map();
+          cardsBefore.forEach(c => {
+            firstPositions.set(c.dataset.id, c.getBoundingClientRect().top);
+          });
+
+          const [movedTracker] = trackers.splice(fromIndex, 1);
+          trackers.splice(toIndex, 0, movedTracker);
+          saveState();
+
+          render();
+
+          const cardsAfter = Array.from(document.querySelectorAll('.tracker-card'));
+          cardsAfter.forEach(c => {
+            const cardId = c.dataset.id;
+            const firstTop = firstPositions.get(cardId);
+            if (firstTop !== undefined) {
+              const lastTop = c.getBoundingClientRect().top;
+              const deltaY = firstTop - lastTop;
+
+              if (deltaY !== 0) {
+                c.style.transform = `translateY(${deltaY}px)`;
+                c.style.transition = 'none';
+
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    c.style.transition = 'transform 0.3s cubic-bezier(0.2, 0, 0, 1)';
+                    c.style.transform = 'translateY(0)';
+                  });
+                });
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+
+  function toggleToday(id) {
+    const tracker = trackers.find(t => t.id === id);
+    if (!tracker) return;
+
+    const todayStr = getTodayString();
+    if (tracker.history[todayStr]) {
+      delete tracker.history[todayStr];
+    } else {
+      tracker.history[todayStr] = true;
+    }
+    saveState();
+    render();
+  }
+
+  function addTracker(name) {
+    const newTracker = {
+      id: crypto.randomUUID(),
+      name: name,
+      history: {}
+    };
+    trackers.unshift(newTracker);
+    saveState();
+    render();
+  }
+
+  toggleCheckBtn.onclick = () => {
+    quickCheckPanel.classList.toggle('open');
+    toggleCheckBtn.classList.toggle('active');
+  };
+
+  addTrackerBtn.onclick = () => {
+    trackerNameInput.value = '';
+    modal.style.display = 'flex';
+    trackerNameInput.focus();
+  };
+
+  cancelBtn.onclick = () => {
+    modal.style.display = 'none';
+  };
+
+  saveBtn.onclick = () => {
+    const name = trackerNameInput.value.trim();
+    if (name) {
+      addTracker(name);
+      modal.style.display = 'none';
+    }
+  };
+
+  trackerNameInput.onkeydown = (e) => {
+    if (e.key === 'Enter') saveBtn.click();
+  };
+
+  render();
+</script>
+</body>
+</html>
