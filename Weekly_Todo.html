@@ -23,6 +23,10 @@
       padding: 0;
     }
 
+    html {
+      width: 100%;
+    }
+
     body {
       background-color: #191919; /* Notionのダークモード背景色 */
       color: #9b9a97; /* Notionの通常テキスト（グレー） */
@@ -31,32 +35,32 @@
       display: flex;
       justify-content: flex-start;
       align-items: flex-start;
-      min-height: 100vh;
       position: relative;
+      min-height: 100vh;
     }
 
-    /* 全体レイアウト：左側に今日のブロック、右側に1週間のカレンダー */
+    /* 全体レイアウト：横幅いっぱいに広げ、縦幅は可変 */
     .main-container {
       display: flex;
-      gap: 48px;
+      gap: 32px;
       width: 100%;
-      max-width: 1100px;
       align-items: flex-start;
     }
 
-    /* 左側の「今日」専用ブロック */
+    /* 左側の「今日」専用ブロック（幅可変） */
     .today-sidebar-card {
       background: transparent;
       border: none;
       padding: 0;
-      width: 260px;
+      width: 20%;
+      min-width: 220px;
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
 
-    /* カレンダーグリッド（3列×2行） */
+    /* カレンダーグリッド（3列のまま画面幅に応じて自動伸縮） */
     .calendar-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -72,6 +76,7 @@
       background: transparent;
       padding: 0;
       border: none;
+      min-width: 0; /* グリッド内でテキストがはみ出さないようにする調整 */
     }
 
     /* 曜日ヘッダー部分：元の画像通り「下に薄い線」を配置 */
@@ -109,6 +114,7 @@
       font-size: 14px;
       color: #9b9a97;
       user-select: none;
+      width: 100%;
     }
 
     .todo-item input[type="checkbox"] {
@@ -201,7 +207,7 @@
       font-size: 18px;
     }
 
-    /* レスポンシブ対応 */
+    /* レスポンシブ対応：狭い画面では縦並びに切り替え */
     @media (max-width: 900px) {
       .main-container {
         flex-direction: column;
@@ -254,7 +260,7 @@
       return mapping[jsDay];
     }
 
-    const STORAGE_KEY = 'notion_weekly_todos_v9';
+    const STORAGE_KEY = 'notion_weekly_todos_v11';
     let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
 
     const gridEl = document.getElementById('calendarGrid');
