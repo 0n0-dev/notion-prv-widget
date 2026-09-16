@@ -446,7 +446,7 @@
   </div>
 
   <div id="quick-check-panel">
-    <div class="quick-check-title">今日のタスク完了を記録:</div>
+    <div class="quick-check-title">今日のタスク完了を記録</div>
     <div class="quick-check-list" id="quick-check-list"></div>
   </div>
 
@@ -587,7 +587,7 @@
     const displayedTrackers = isFavoriteFilterActive ? trackers.filter(t => t.isFavorite) : trackers;
 
     if (displayedTrackers.length === 0) {
-      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '右上ボタンからトラッカーを追加してください'}</div>`;
+      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '＋ボタンからトラッカーを追加してください'}</div>`;
     }
 
     trackers.forEach(t => {
