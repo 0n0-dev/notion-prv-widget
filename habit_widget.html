@@ -18,21 +18,6 @@
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  
-  /* ページ全体のスクロールバーを完全に排除 */
-  html, body {
-    width: 100%;
-    height: 100%;
-    overflow: hidden !important;
-    -ms-overflow-style: none; /* IE, Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-  
-  html::-webkit-scrollbar,
-  body::-webkit-scrollbar {
-    display: none !important; /* Chrome, Safari, Notion Electron */
-  }
-
   body {
     background-color: var(--bg-color);
     color: var(--text-color);
@@ -40,6 +25,7 @@
     padding: 16px;
     font-size: 14px;
     position: relative;
+    overflow-x: hidden;
   }
 
   /* ヘッダー */
@@ -111,7 +97,7 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-    box-shadow: -8px 0 24px rgba(0,0,0,0.4);
+    box-shadow: none; /* 映り込み防止のため影を削除 */
   }
   .sidebar.open {
     right: 0;
@@ -272,14 +258,8 @@
   /* 草グラフ構造 */
   .tracker-body {
     display: flex;
-    overflow-x: auto; /* グラフ部分のみ必要に応じて横スクロール可能に */
-    overflow-y: hidden;
+    overflow: hidden;
     padding-bottom: 4px;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .tracker-body::-webkit-scrollbar {
-    display: none;
   }
 
   .weekday-labels {
@@ -352,7 +332,6 @@
   }
   .mode-2weeks .tracker-body {
     padding-bottom: 0;
-    overflow: hidden;
   }
   .mode-2weeks .day-block {
     width: 14px;
