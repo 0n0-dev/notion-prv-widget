@@ -195,7 +195,7 @@
   input:checked + .slider { background-color: #34c759; }
   input:checked + .slider:before { transform: translateX(18px); }
 
-  /* クイックチェック（スムーズ展開アニメーション対応） */
+  /* クイックチェック */
   #quick-check-panel {
     max-height: 0;
     opacity: 0;
@@ -263,7 +263,6 @@
 
   .card-actions { display: flex; align-items: center; gap: 4px; }
 
-  /* デフォルトはお気に入りボタンを非表示（ホバー時のみ） */
   .favorite-btn {
     background: none; border: none; color: var(--text-sub); cursor: pointer; padding: 4px;
     border-radius: 6px; display: flex; align-items: center; justify-content: center;
@@ -299,8 +298,37 @@
   }
   .weekday-labels div { height: 10px; }
 
-  .graph-container { display: flex; flex-direction: column; overflow-x: auto; width: 100%; align-items: flex-start; scrollbar-width: none; }
+  .graph-container { 
+    display: flex; 
+    flex-direction: column; 
+    overflow-x: auto; 
+    width: 100%; 
+    align-items: flex-start; 
+    scrollbar-width: none; 
+    position: relative;
+    /* フェードアウト（マスク）用のスタイル基盤 */
+    -webkit-mask-image: linear-gradient(to right, black 100%, black 100%);
+    mask-image: linear-gradient(to right, black 100%, black 100%);
+    transition: mask-image 0.2s ease, -webkit-mask-image 0.2s ease;
+  }
   .graph-container::-webkit-scrollbar { display: none; }
+
+  /* 左側が見切れているとき（スクロールされているとき）のグラデーション */
+  .graph-container.fade-left {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 100px, black 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 96px, black 96%);
+  }
+  /* 右側が見切れているとき用のグラデーション（必要に応じて両側対応にする場合） */
+  .graph-container.fade-right {
+    -webkit-mask-image: linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%);
+  }
+  /* 左右両方見切れているとき */
+  .graph-container.fade-left.fade-right {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 24px, black calc(100% - 24px), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 24px, black calc(100% - 24px), transparent 100%);
+  }
+
   .month-labels {
     display: grid; grid-template-columns: repeat(53, 10px); gap: 3px;
     height: 15px; margin-bottom: 3px; font-size: 10px; color: var(--text-sub);
@@ -525,7 +553,7 @@
   let is4WeeksMode = localStorage.getItem('github-tracker-4weeks') === 'true';
   let isLightTheme = localStorage.getItem('github-tracker-theme') === 'light';
   let isFavoriteAlways = localStorage.getItem('github-tracker-favorite-always') === 'true';
-  let isHoverColorEnabled = localStorage.getItem('github-tracker-hover-color') === 'true'; // デフォルトはOFF
+  let isHoverColorEnabled = localStorage.getItem('github-tracker-hover-color') === 'true';
   let isFavoriteFilterActive = false;
 
   let activeColorSelection = COLOR_PALETTE[0].hex;
@@ -554,7 +582,7 @@
     else document.documentElement.removeAttribute('data-theme');
   }
 
-  // --- カラーパレット描画 (共通化) ---
+  // --- カラーパレット描画 ---
   function renderPalette(containerEl, selectedHex, onSelect) {
     containerEl.innerHTML = '';
     activeColorSelection = selectedHex;
@@ -580,9 +608,25 @@
     });
   }
 
+  // --- スクロール位置に応じたフェード状態の更新関数 ---
+  function updateScrollFadeState(containerEl) {
+    const scrollLeft = containerEl.scrollLeft;
+    const maxScrollLeft = containerEl.scrollWidth - containerEl.clientWidth;
+    
+    // 誤差を考慮して判定
+    const isAtLeft = scrollLeft <= 2;
+    const isAtRight = scrollLeft >= maxScrollLeft - 2;
+
+    if (maxScrollLeft > 4) {
+      containerEl.classList.toggle('fade-left', !isAtLeft);
+      containerEl.classList.toggle('fade-right', !isAtRight);
+    } else {
+      containerEl.classList.remove('fade-left', 'fade-right');
+    }
+  }
+
   // --- 描画メイン処理 ---
   function render() {
-    // スイッチUI状態更新
     viewSegmentedControl.setAttribute('data-active', is4WeeksMode ? 'compact' : 'normal');
     document.getElementById('view-normal-btn').classList.toggle('active', !is4WeeksMode);
     document.getElementById('view-compact-btn').classList.toggle('active', is4WeeksMode);
@@ -605,7 +649,6 @@
       const cardColor = t.color || COLOR_PALETTE[0].hex;
       const isTodayDone = !!t.history[todayStr];
 
-      // クイックチェックリスト要素生成
       const checkItem = document.createElement('div');
       checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
       if (isTodayDone) {
@@ -620,13 +663,11 @@
     displayedTrackers.forEach(t => {
       const cardColor = t.color || COLOR_PALETTE[0].hex;
 
-      // カード作成
       const card = document.createElement('div');
       card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '') + (t.isFavorite ? ' is-favorite' : '');
       card.draggable = true;
       card.dataset.id = t.id;
 
-      // ホバー時カラーが有効かつカラーコードの場合のみ、トラッカーカラーを背景に反映
       if (isHoverColorEnabled && cardColor.startsWith('#')) {
         card.style.setProperty('--card-hover-bg-dynamic', cardColor + '44');
       } else {
@@ -655,10 +696,12 @@
       setupDragEvents(card, t.id);
       trackerListEl.appendChild(card);
 
-      // グリッド生成
       const gridEl = card.querySelector('.grid');
       const monthLabelsEl = card.querySelector('.month-labels');
       const containerEl = card.querySelector('.graph-container');
+
+      // スクロール時のフェード切り替えイベントを設定
+      containerEl.addEventListener('scroll', () => updateScrollFadeState(containerEl));
 
       if (is4WeeksMode) {
         for (let i = 27; i >= 0; i--) {
@@ -716,7 +759,10 @@
         }
       }
 
-      requestAnimationFrame(() => containerEl.scrollLeft = containerEl.scrollWidth);
+      requestAnimationFrame(() => {
+        containerEl.scrollLeft = containerEl.scrollWidth;
+        updateScrollFadeState(containerEl);
+      });
     });
   }
 
@@ -729,7 +775,7 @@
     parentGrid.appendChild(block);
   }
 
-  // --- イベント委任（Event Delegation） ---
+  // --- イベント委任 ---
   trackerListEl.addEventListener('dblclick', (e) => {
     const card = e.target.closest('.tracker-card');
     if (!card) return;
@@ -885,13 +931,11 @@
     toggleModal('delete-modal', false);
   };
 
-  // お気に入りフィルター切替
   filterFavoriteBtn.onclick = () => {
     isFavoriteFilterActive = !isFavoriteFilterActive;
     render();
   };
 
-  // 表示切替
   document.getElementById('view-normal-btn').onclick = () => {
     if (!is4WeeksMode) return;
     is4WeeksMode = false; localStorage.setItem('github-tracker-4weeks', false); render();
@@ -901,7 +945,6 @@
     is4WeeksMode = true; localStorage.setItem('github-tracker-4weeks', true); render();
   };
 
-  // サイドバー・テーマ
   document.getElementById('open-sidebar-btn').onclick = () => { sidebar.classList.add('open'); sidebarOverlay.classList.add('open'); };
   const closeSidebar = () => { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('open'); };
   document.getElementById('close-sidebar-btn').onclick = closeSidebar;
@@ -942,7 +985,10 @@
   };
 
   window.addEventListener('resize', () => {
-    document.querySelectorAll('.graph-container').forEach(el => el.scrollLeft = el.scrollWidth);
+    document.querySelectorAll('.graph-container').forEach(el => {
+      el.scrollLeft = el.scrollWidth;
+      updateScrollFadeState(el);
+    });
   });
 
   render();
