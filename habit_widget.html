@@ -11,6 +11,7 @@
   :root {
     --bg-color: #191919;            
     --card-bg: #202020;             
+    --card-hover-bg: #262626;
     --border-color: #2f2f2f;         
     --text-color: #d4d4d4;           
     --text-title: #e3e3e3;
@@ -28,6 +29,7 @@
   :root[data-theme="light"] {
     --bg-color: #ffffff;            
     --card-bg: #f7f6f3;             
+    --card-hover-bg: #f0efeC;
     --border-color: #e9e9e8;         
     --text-color: #37352f;           
     --text-title: #222222;
@@ -121,7 +123,7 @@
     transition: background 0.2s, transform 0.1s, color 0.2s;
   }
   .icon-btn .material-icons { font-size: 16px; }
-  .icon-btn:hover { filter: brightness(1.2); }
+  .icon-btn:hover { background: var(--card-hover-bg); }
   .icon-btn:active { transform: scale(0.95); }
   .icon-btn.active { background: #3d90e1; color: white; }
   .icon-btn.favorite-filter-btn.active { background: #ff5252; color: white; }
@@ -238,7 +240,7 @@
   .tracker-card:active { cursor: grabbing; }
   .tracker-card:hover {
     transform: translateY(-4px);
-    background-color: var(--card-hover-bg, var(--card-bg));
+    background-color: var(--card-hover-bg-dynamic, var(--card-hover-bg));
     box-shadow: 0 12px 24px -4px var(--shadow-color), 0 4px 8px -2px var(--shadow-color);
   }
   .tracker-card.dragging { opacity: 0.3; transform: none !important; box-shadow: none !important; }
@@ -443,10 +445,17 @@
         <span class="slider"></span>
       </label>
     </div>
+    <div class="setting-item">
+      <span>ホバー時にトラッカーカラーを反映</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle-hover-color">
+        <span class="slider"></span>
+      </label>
+    </div>
   </div>
 
   <div id="quick-check-panel">
-    <div class="quick-check-title">今日のタスク完了を記録</div>
+    <div class="quick-check-title">今日のタスク完了を記録:</div>
     <div class="quick-check-list" id="quick-check-list"></div>
   </div>
 
@@ -516,6 +525,7 @@
   let is4WeeksMode = localStorage.getItem('github-tracker-4weeks') === 'true';
   let isLightTheme = localStorage.getItem('github-tracker-theme') === 'light';
   let isFavoriteAlways = localStorage.getItem('github-tracker-favorite-always') === 'true';
+  let isHoverColorEnabled = localStorage.getItem('github-tracker-hover-color') === 'true'; // デフォルトはOFF
   let isFavoriteFilterActive = false;
 
   let activeColorSelection = COLOR_PALETTE[0].hex;
@@ -531,6 +541,7 @@
   const sidebarOverlay = document.getElementById('sidebar-overlay');
   const toggleThemeModeInput = document.getElementById('toggle-theme-mode');
   const toggleFavoriteAlwaysInput = document.getElementById('toggle-favorite-always');
+  const toggleHoverColorInput = document.getElementById('toggle-hover-color');
   const filterFavoriteBtn = document.getElementById('filter-favorite-btn');
 
   // --- 共通ユーティリティ ---
@@ -587,7 +598,7 @@
     const displayedTrackers = isFavoriteFilterActive ? trackers.filter(t => t.isFavorite) : trackers;
 
     if (displayedTrackers.length === 0) {
-      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '＋ボタンからトラッカーを追加してください'}</div>`;
+      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '右上ボタンからトラッカーを追加してください'}</div>`;
     }
 
     trackers.forEach(t => {
@@ -614,12 +625,12 @@
       card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '') + (t.isFavorite ? ' is-favorite' : '');
       card.draggable = true;
       card.dataset.id = t.id;
-      
-      // ホバー時の背景色を設定カラーベースに動的設定（カラーコードの場合は透明度を付与、変数等の場合はそのままor薄く）
-      if (cardColor.startsWith('#')) {
-        card.style.setProperty('--card-hover-bg', cardColor + '44'); // 10%程度の薄い透明度
+
+      // ホバー時カラーが有効かつカラーコードの場合のみ、トラッカーカラーを背景に反映
+      if (isHoverColorEnabled && cardColor.startsWith('#')) {
+        card.style.setProperty('--card-hover-bg-dynamic', cardColor + '44');
       } else {
-        card.style.setProperty('--card-hover-bg', 'rgba(125, 125, 125, 0.1)');
+        card.style.removeProperty('--card-hover-bg-dynamic');
       }
 
       card.innerHTML = `
@@ -908,6 +919,13 @@
   toggleFavoriteAlwaysInput.onchange = (e) => {
     isFavoriteAlways = e.target.checked;
     localStorage.setItem('github-tracker-favorite-always', isFavoriteAlways);
+    render();
+  };
+
+  toggleHoverColorInput.checked = isHoverColorEnabled;
+  toggleHoverColorInput.onchange = (e) => {
+    isHoverColorEnabled = e.target.checked;
+    localStorage.setItem('github-tracker-hover-color', isHoverColorEnabled);
     render();
   };
 
