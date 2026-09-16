@@ -63,7 +63,7 @@
     margin-bottom: 12px;
   }
 
-  /* iOS風セグメントコントロール（スイッチの色を #3d90e1 に変更） */
+  /* iOS風セグメントコントロール */
   .ios-segmented-control {
     position: relative;
     display: flex;
@@ -107,7 +107,7 @@
     transform: translateX(100%);
   }
 
-  /* コントロールボタン群（円形＝丸に変更） */
+  /* コントロールボタン群 */
   .controls { display: flex; gap: 6px; }
   .icon-btn {
     background: var(--card-bg);
@@ -126,6 +126,7 @@
   .icon-btn:hover { background: var(--card-hover-bg); }
   .icon-btn:active { transform: scale(0.95); }
   .icon-btn.active { background: #3d90e1; color: white; }
+  .icon-btn.favorite-filter-btn.active { background: #ff5252; color: white; }
 
   /* サイドバー */
   .sidebar-overlay {
@@ -194,15 +195,23 @@
   input:checked + .slider { background-color: #34c759; }
   input:checked + .slider:before { transform: translateX(18px); }
 
-  /* クイックチェック */
+  /* クイックチェック（スムーズ展開アニメーション対応） */
   #quick-check-panel {
-    display: none;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
     background: var(--card-bg);
     border-radius: 16px;
+    padding: 0 14px;
+    margin-bottom: 0;
+    transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.3s ease, margin-bottom 0.3s ease;
+  }
+  #quick-check-panel.open {
+    max-height: 300px;
+    opacity: 1;
     padding: 14px;
     margin-bottom: 16px;
   }
-  #quick-check-panel.open { display: block; }
   .quick-check-title { font-size: 12px; color: var(--text-sub); margin-bottom: 10px; }
   .quick-check-list { display: flex; flex-wrap: wrap; gap: 8px; }
   .quick-check-item {
@@ -213,8 +222,9 @@
     cursor: pointer;
     user-select: none;
     font-size: 13px;
-    transition: background 0.2s, color 0.2s;
+    transition: background 0.2s, color 0.2s, transform 0.1s ease;
   }
+  .quick-check-item:active { transform: scale(0.92); }
   .quick-check-item .material-icons { font-size: 16px; }
 
   /* トラッカーカード */
@@ -238,17 +248,38 @@
 
   .tracker-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
   .tracker-name-wrapper { display: flex; align-items: center; flex-grow: 1; margin-right: 8px; min-width: 0; }
+  
   .tracker-name { 
-    font-weight: 600; color: var(--text-title); cursor: pointer; user-select: none;
+    font-weight: 400; color: var(--text-title); cursor: pointer; user-select: none;
     padding: 2px 4px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .tracker-name:hover { background: rgba(125, 125, 125, 0.1); }
   .tracker-name-input {
-    font-weight: 600; color: var(--text-title); background: var(--bg-color);
+    font-weight: 400; color: var(--text-title); background: var(--bg-color);
     border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px; font-size: 14px;
     outline: none; width: 100%; max-width: 200px;
   }
   .tracker-name-input:focus { border-color: var(--color-filled); }
+
+  .card-actions { display: flex; align-items: center; gap: 4px; }
+
+  /* デフォルトはお気に入りボタンを非表示（ホバー時のみ） */
+  .favorite-btn {
+    background: none; border: none; color: var(--text-sub); cursor: pointer; padding: 4px;
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease, color 0.2s, background 0.2s, transform 0.1s;
+  }
+  .tracker-card:hover .favorite-btn {
+    opacity: 1; pointer-events: auto;
+  }
+  .tracker-list.show-favorite-always .tracker-card.is-favorite .favorite-btn {
+    opacity: 1; pointer-events: auto;
+  }
+
+  .favorite-btn .material-icons { font-size: 18px; }
+  .favorite-btn:hover { color: #ff5252; background: rgba(255, 82, 82, 0.1); }
+  .favorite-btn:active { transform: scale(0.9); }
+  .tracker-card.is-favorite .favorite-btn { color: #ff5252; }
 
   .delete-btn {
     background: none; border: none; color: var(--text-sub); cursor: pointer; padding: 4px;
@@ -259,7 +290,7 @@
   .delete-btn .material-icons { font-size: 18px; }
   .delete-btn:hover { color: #ff5555; background: rgba(255, 85, 85, 0.1); }
 
-  /* グラフ表示 */
+  /* グラフ表示（基本モード） */
   .tracker-body { display: flex; overflow: hidden; padding-bottom: 4px; }
   .weekday-labels {
     display: grid; grid-template-rows: repeat(7, 10px); gap: 3px;
@@ -283,14 +314,46 @@
   }
   .day-block { width: 10px; height: 10px; background-color: var(--color-empty); border-radius: 3px; transition: background-color 0.15s ease; }
 
-  /* 4週間モード */
-  .mode-4weeks { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; }
-  .mode-4weeks .tracker-header { margin-bottom: 0; flex-shrink: 0; max-width: 40%; }
-  .mode-4weeks .weekday-labels, .mode-4weeks .month-labels { display: none !important; }
-  .mode-4weeks .tracker-body { padding-bottom: 0; flex-grow: 1; justify-content: flex-start; overflow: hidden; }
+  /* 4週間モード（コンパクトモード） */
+  .mode-4weeks { display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; }
+  .mode-4weeks .tracker-header { margin-bottom: 0; width: 100%; }
+  .mode-4weeks .month-labels { display: none !important; }
+  .mode-4weeks .weekday-labels { display: none !important; }
+
+  .mode-4weeks .tracker-body { padding-bottom: 0; width: 100%; flex-direction: column; }
   .mode-4weeks .graph-container { width: 100%; align-items: flex-start; overflow-x: auto; }
-  .mode-4weeks .grid { display: flex !important; flex-direction: row; gap: 4px; width: max-content; }
-  .mode-4weeks .day-block { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+  
+  .mode-4weeks .grid {
+    display: flex !important;
+    flex-direction: row;
+    gap: 4px;
+    width: max-content;
+    grid-template-rows: none !important;
+    grid-template-columns: none !important;
+  }
+
+  .compact-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 12px;
+    flex-shrink: 0;
+  }
+  .compact-weekday {
+    font-size: 9px;
+    color: var(--text-sub);
+    height: 12px;
+    line-height: 12px;
+    text-align: center;
+    user-select: none;
+  }
+  .mode-4weeks .day-block {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
 
   /* 共通モーダル */
   .modal-overlay {
@@ -301,7 +364,7 @@
   .modal-overlay.open { display: flex; }
   .modal {
     background: var(--card-bg); border-radius: 20px; padding: 20px;
-    width: 320px; box-shadow: 0 10px 30px var(--shadow-color);
+    width: 340px; box-shadow: 0 10px 30px var(--shadow-color);
   }
   .modal h3 { margin-bottom: 14px; font-size: 15px; color: var(--text-title); }
   .modal input[type="text"] {
@@ -312,14 +375,23 @@
   .modal input[type="text"]:focus { border-color: var(--color-filled); }
 
   .color-picker-label { font-size: 12px; color: var(--text-sub); margin-bottom: 10px; display: block; }
-  .color-palette { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; padding: 4px 0; }
+  .color-palette { 
+    display: grid; 
+    grid-template-columns: repeat(8, 1fr); 
+    gap: 10px; 
+    margin-bottom: 20px; 
+    padding: 10px 8px; 
+    max-height: 180px; 
+    overflow-y: auto; 
+    justify-items: center;
+  }
   .color-option {
     width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent;
     display: flex; align-items: center; justify-content: center;
     transition: transform 0.15s ease, border-color 0.15s ease; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
   }
   .color-option:hover { transform: scale(1.15); }
-  .color-option.selected { transform: scale(1.2); border-color: var(--text-title); box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--text-title); }
+  .color-option.selected { transform: scale(1.2); border-color: var(--text-title); box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--text-title); z-index: 2; }
   .color-option .check-icon { font-size: 15px; display: none; user-select: none; }
   .color-option.selected .check-icon { display: block; }
 
@@ -345,6 +417,7 @@
       <div class="option" id="view-compact-btn">コンパクト</div>
     </div>
     <div class="controls">
+      <button class="icon-btn favorite-filter-btn" id="filter-favorite-btn" title="お気に入りのみ表示"><span class="material-icons">favorite</span></button>
       <button class="icon-btn" id="toggle-check-btn" title="今日の完了確認"><span class="material-icons">done</span></button>
       <button class="icon-btn" id="add-tracker-btn" title="トラッカーの追加"><span class="material-icons">add</span></button>
       <button class="icon-btn" id="open-sidebar-btn" title="設定"><span class="material-icons">settings</span></button>
@@ -362,6 +435,13 @@
       <span>ライトテーマ</span>
       <label class="switch">
         <input type="checkbox" id="toggle-theme-mode">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <span>ハートマークを常に表示</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle-favorite-always">
         <span class="slider"></span>
       </label>
     </div>
@@ -422,12 +502,23 @@
     { id: 'red', name: 'レッド', hex: '#ff5252', textLight: true },
     { id: 'orange', name: 'オレンジ', hex: '#ff793f', textLight: true },
     { id: 'yellow', name: 'イエロー', hex: '#f7b731', textLight: false },
-    { id: 'theme-dynamic', name: 'テーマ連動', hex: 'var(--theme-dynamic-color)', border: 'var(--theme-dynamic-border)', isDynamic: true }
+    { id: 'theme-dynamic', name: 'テーマ連動', hex: 'var(--theme-dynamic-color)', border: 'var(--theme-dynamic-border)', isDynamic: true },
+    
+    { id: 'notion-brown', name: 'Notion ブラウン', hex: '#976D57', textLight: true },
+    { id: 'notion-orange', name: 'Notion オレンジ', hex: '#CC782F', textLight: true },
+    { id: 'notion-yellow', name: 'Notion イエロー', hex: '#C29343', textLight: false },
+    { id: 'notion-green', name: 'Notion グリーン', hex: '#548164', textLight: true },
+    { id: 'notion-blue', name: 'Notion ブルー', hex: '#487CA5', textLight: true },
+    { id: 'notion-purple', name: 'Notion パープル', hex: '#8A67AB', textLight: true },
+    { id: 'notion-pink', name: 'Notion ピンク', hex: '#B35488', textLight: true },
+    { id: 'notion-red', name: 'Notion レッド', hex: '#C4554D', textLight: true }
   ];
 
   let trackers = JSON.parse(localStorage.getItem('github-trackers') || '[]');
   let is4WeeksMode = localStorage.getItem('github-tracker-4weeks') === 'true';
   let isLightTheme = localStorage.getItem('github-tracker-theme') === 'light';
+  let isFavoriteAlways = localStorage.getItem('github-tracker-favorite-always') === 'true';
+  let isFavoriteFilterActive = false;
 
   let activeColorSelection = COLOR_PALETTE[0].hex;
   let targetTrackerId = null;
@@ -441,6 +532,8 @@
   const sidebar = document.getElementById('sidebar');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
   const toggleThemeModeInput = document.getElementById('toggle-theme-mode');
+  const toggleFavoriteAlwaysInput = document.getElementById('toggle-favorite-always');
+  const filterFavoriteBtn = document.getElementById('filter-favorite-btn');
 
   // --- 共通ユーティリティ ---
   const saveState = () => localStorage.setItem('github-trackers', JSON.stringify(trackers));
@@ -484,22 +577,43 @@
     viewSegmentedControl.setAttribute('data-active', is4WeeksMode ? 'compact' : 'normal');
     document.getElementById('view-normal-btn').classList.toggle('active', !is4WeeksMode);
     document.getElementById('view-compact-btn').classList.toggle('active', is4WeeksMode);
+    filterFavoriteBtn.classList.toggle('active', isFavoriteFilterActive);
+    trackerListEl.classList.toggle('show-favorite-always', isFavoriteAlways);
 
-    trackerListEl.innerHTML = trackers.length === 0 
-      ? '<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">右上ボタンからトラッカーを追加してください</div>' 
-      : '';
+    trackerListEl.innerHTML = '';
     quickCheckList.innerHTML = '';
 
     const todayStr = getTodayString();
     const today = new Date();
 
+    const displayedTrackers = isFavoriteFilterActive ? trackers.filter(t => t.isFavorite) : trackers;
+
+    if (displayedTrackers.length === 0) {
+      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '右上ボタンからトラッカーを追加してください'}</div>`;
+    }
+
     trackers.forEach(t => {
       const cardColor = t.color || COLOR_PALETTE[0].hex;
       const isTodayDone = !!t.history[todayStr];
 
+      // クイックチェックリスト要素生成（未完了は枠の丸、完了はチェックマーク丸）
+      const checkItem = document.createElement('div');
+      checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
+      if (isTodayDone) {
+        checkItem.style.color = cardColor;
+        checkItem.style.backgroundColor = cardColor === 'var(--theme-dynamic-color)' ? 'rgba(125,125,125,0.15)' : cardColor + '26';
+      }
+      checkItem.innerHTML = `<span class="material-icons">${isTodayDone ? 'check_circle' : 'radio_button_unchecked'}</span> <span>${t.name}</span>`;
+      checkItem.onclick = () => toggleToday(t.id);
+      quickCheckList.appendChild(checkItem);
+    });
+
+    displayedTrackers.forEach(t => {
+      const cardColor = t.color || COLOR_PALETTE[0].hex;
+
       // カード作成
       const card = document.createElement('div');
-      card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '');
+      card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '') + (t.isFavorite ? ' is-favorite' : '');
       card.draggable = true;
       card.dataset.id = t.id;
       card.innerHTML = `
@@ -507,7 +621,10 @@
           <div class="tracker-name-wrapper">
             <span class="tracker-name" title="ダブルクリックでタイトル編集">${t.name}</span>
           </div>
-          <button class="delete-btn" title="削除"><span class="material-icons">close</span></button>
+          <div class="card-actions">
+            <button class="favorite-btn" title="お気に入り"><span class="material-icons">${t.isFavorite ? 'favorite' : 'favorite_border'}</span></button>
+            <button class="delete-btn" title="削除"><span class="material-icons">close</span></button>
+          </div>
         </div>
         <div class="tracker-body">
           <div class="weekday-labels"><div>月</div><div></div><div>水</div><div></div><div>金</div><div></div><div>日</div></div>
@@ -530,7 +647,26 @@
         for (let i = 27; i >= 0; i--) {
           const d = new Date(today);
           d.setDate(today.getDate() - i);
-          createBlock(gridEl, d.toISOString().split('T')[0], t.history, cardColor);
+          
+          const col = document.createElement('div');
+          col.className = 'compact-col';
+
+          const weekdayDiv = document.createElement('div');
+          weekdayDiv.className = 'compact-weekday';
+          if (d.getDay() === 1) {
+            weekdayDiv.textContent = '月';
+          }
+          col.appendChild(weekdayDiv);
+
+          const dateStr = d.toISOString().split('T')[0];
+          const block = document.createElement('div');
+          const isDone = !!t.history[dateStr];
+          block.className = 'day-block' + (isDone ? ' filled' : '');
+          if (isDone) block.style.backgroundColor = cardColor;
+          block.title = `${dateStr}: ${isDone ? '完了' : '未完了'}`;
+          col.appendChild(block);
+
+          gridEl.appendChild(col);
         }
       } else {
         const weeksCount = 53;
@@ -564,17 +700,6 @@
       }
 
       requestAnimationFrame(() => containerEl.scrollLeft = containerEl.scrollWidth);
-
-      // クイックチェックリスト要素生成
-      const checkItem = document.createElement('div');
-      checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
-      if (isTodayDone) {
-        checkItem.style.color = cardColor;
-        checkItem.style.backgroundColor = cardColor === 'var(--theme-dynamic-color)' ? 'rgba(125,125,125,0.15)' : cardColor + '26';
-      }
-      checkItem.innerHTML = `<span class="material-icons">${isTodayDone ? 'check_box' : 'check_box_outline_blank'}</span> <span>${t.name}</span>`;
-      checkItem.onclick = () => toggleToday(t.id);
-      quickCheckList.appendChild(checkItem);
     });
   }
 
@@ -596,7 +721,7 @@
 
     if (e.target.classList.contains('tracker-name')) {
       startInlineEdit(id, e.target);
-    } else if (!e.target.closest('.delete-btn') && !e.target.closest('input')) {
+    } else if (!e.target.closest('.delete-btn') && !e.target.closest('.favorite-btn') && !e.target.closest('input')) {
       targetTrackerId = id;
       renderPalette(document.getElementById('edit-color-palette'), tracker.color || COLOR_PALETTE[0].hex);
       toggleModal('color-modal', true);
@@ -611,6 +736,19 @@
       const tracker = trackers.find(t => t.id === targetTrackerId);
       document.getElementById('delete-modal-text').textContent = `「${tracker.name}」を削除してもよろしいですか？`;
       toggleModal('delete-modal', true);
+      return;
+    }
+
+    const favoriteBtn = e.target.closest('.favorite-btn');
+    if (favoriteBtn) {
+      const card = favoriteBtn.closest('.tracker-card');
+      const id = card.dataset.id;
+      const tracker = trackers.find(t => t.id === id);
+      if (tracker) {
+        tracker.isFavorite = !tracker.isFavorite;
+        saveState();
+        render();
+      }
     }
   });
 
@@ -714,7 +852,7 @@
     const input = document.getElementById('tracker-name-input');
     const name = input.value.trim();
     if (name) {
-      trackers.unshift({ id: crypto.randomUUID(), name, color: activeColorSelection, history: {} });
+      trackers.unshift({ id: crypto.randomUUID(), name, color: activeColorSelection, isFavorite: false, history: {} });
       saveState(); render();
       toggleModal('add-modal', false);
     }
@@ -728,6 +866,12 @@
     trackers = trackers.filter(t => t.id !== targetTrackerId);
     saveState(); render();
     toggleModal('delete-modal', false);
+  };
+
+  // お気に入りフィルター切替
+  filterFavoriteBtn.onclick = () => {
+    isFavoriteFilterActive = !isFavoriteFilterActive;
+    render();
   };
 
   // 表示切替
@@ -752,6 +896,13 @@
     isLightTheme = e.target.checked;
     localStorage.setItem('github-tracker-theme', isLightTheme ? 'light' : 'dark');
     applyTheme(isLightTheme); render();
+  };
+
+  toggleFavoriteAlwaysInput.checked = isFavoriteAlways;
+  toggleFavoriteAlwaysInput.onchange = (e) => {
+    isFavoriteAlways = e.target.checked;
+    localStorage.setItem('github-tracker-favorite-always', isFavoriteAlways);
+    render();
   };
 
   document.getElementById('toggle-check-btn').onclick = (e) => {
