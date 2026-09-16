@@ -11,7 +11,6 @@
   :root {
     --bg-color: #191919;            
     --card-bg: #202020;             
-    --card-hover-bg: #262626;
     --border-color: #2f2f2f;         
     --text-color: #d4d4d4;           
     --text-title: #e3e3e3;
@@ -29,7 +28,6 @@
   :root[data-theme="light"] {
     --bg-color: #ffffff;            
     --card-bg: #f7f6f3;             
-    --card-hover-bg: #f0efeC;
     --border-color: #e9e9e8;         
     --text-color: #37352f;           
     --text-title: #222222;
@@ -123,7 +121,7 @@
     transition: background 0.2s, transform 0.1s, color 0.2s;
   }
   .icon-btn .material-icons { font-size: 16px; }
-  .icon-btn:hover { background: var(--card-hover-bg); }
+  .icon-btn:hover { filter: brightness(1.2); }
   .icon-btn:active { transform: scale(0.95); }
   .icon-btn.active { background: #3d90e1; color: white; }
   .icon-btn.favorite-filter-btn.active { background: #ff5252; color: white; }
@@ -240,7 +238,7 @@
   .tracker-card:active { cursor: grabbing; }
   .tracker-card:hover {
     transform: translateY(-4px);
-    background-color: var(--card-hover-bg);
+    background-color: var(--card-hover-bg, var(--card-bg));
     box-shadow: 0 12px 24px -4px var(--shadow-color), 0 4px 8px -2px var(--shadow-color);
   }
   .tracker-card.dragging { opacity: 0.3; transform: none !important; box-shadow: none !important; }
@@ -448,7 +446,7 @@
   </div>
 
   <div id="quick-check-panel">
-    <div class="quick-check-title">今日のタスク完了を記録</div>
+    <div class="quick-check-title">今日のタスク完了を記録:</div>
     <div class="quick-check-list" id="quick-check-list"></div>
   </div>
 
@@ -504,14 +502,14 @@
     { id: 'yellow', name: 'イエロー', hex: '#f7b731', textLight: false },
     { id: 'theme-dynamic', name: 'テーマ連動', hex: 'var(--theme-dynamic-color)', border: 'var(--theme-dynamic-border)', isDynamic: true },
     
-    { id: 'notion-brown', name: 'Notion ブラウン', hex: '#976D57', textLight: true },
-    { id: 'notion-orange', name: 'Notion オレンジ', hex: '#CC782F', textLight: true },
-    { id: 'notion-yellow', name: 'Notion イエロー', hex: '#C29343', textLight: false },
-    { id: 'notion-green', name: 'Notion グリーン', hex: '#548164', textLight: true },
-    { id: 'notion-blue', name: 'Notion ブルー', hex: '#487CA5', textLight: true },
-    { id: 'notion-purple', name: 'Notion パープル', hex: '#8A67AB', textLight: true },
-    { id: 'notion-pink', name: 'Notion ピンク', hex: '#B35488', textLight: true },
-    { id: 'notion-red', name: 'Notion レッド', hex: '#C4554D', textLight: true }
+    { id: 'notion-brown', name: 'Notion ブラウン', hex: '#9f765a', textLight: true },
+    { id: 'notion-orange', name: 'Notion オレンジ', hex: '#d27b2d', textLight: true },
+    { id: 'notion-yellow', name: 'Notion イエロー', hex: '#cb9434', textLight: false },
+    { id: 'notion-green', name: 'Notion グリーン', hex: '#50946e', textLight: true },
+    { id: 'notion-blue', name: 'Notion ブルー', hex: '#387dc9', textLight: true },
+    { id: 'notion-purple', name: 'Notion パープル', hex: '#896ebb', textLight: true },
+    { id: 'notion-pink', name: 'Notion ピンク', hex: '#c14c8a', textLight: true },
+    { id: 'notion-red', name: 'Notion レッド', hex: '#b7585e', textLight: true }
   ];
 
   let trackers = JSON.parse(localStorage.getItem('github-trackers') || '[]');
@@ -589,14 +587,14 @@
     const displayedTrackers = isFavoriteFilterActive ? trackers.filter(t => t.isFavorite) : trackers;
 
     if (displayedTrackers.length === 0) {
-      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '＋ボタンからトラッカーを追加してください'}</div>`;
+      trackerListEl.innerHTML = `<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">${isFavoriteFilterActive ? 'お気に入り登録されたトラッカーはありません' : '右上ボタンからトラッカーを追加してください'}</div>`;
     }
 
     trackers.forEach(t => {
       const cardColor = t.color || COLOR_PALETTE[0].hex;
       const isTodayDone = !!t.history[todayStr];
 
-      // クイックチェックリスト要素生成（未完了は枠の丸、完了はチェックマーク丸）
+      // クイックチェックリスト要素生成
       const checkItem = document.createElement('div');
       checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
       if (isTodayDone) {
@@ -616,6 +614,14 @@
       card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '') + (t.isFavorite ? ' is-favorite' : '');
       card.draggable = true;
       card.dataset.id = t.id;
+      
+      // ホバー時の背景色を設定カラーベースに動的設定（カラーコードの場合は透明度を付与、変数等の場合はそのままor薄く）
+      if (cardColor.startsWith('#')) {
+        card.style.setProperty('--card-hover-bg', cardColor + '44'); // 10%程度の薄い透明度
+      } else {
+        card.style.setProperty('--card-hover-bg', 'rgba(125, 125, 125, 0.1)');
+      }
+
       card.innerHTML = `
         <div class="tracker-header">
           <div class="tracker-name-wrapper">
