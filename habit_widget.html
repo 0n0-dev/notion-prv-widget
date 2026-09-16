@@ -4,17 +4,49 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Habit Tracker</title>
+<!-- Google Material Icons CDN -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <style>
+  /* Notion Dark Theme (デフォルト) */
   :root {
-    --bg-color: #191919;            /* Notion Dark Background */
-    --card-bg: #202020;             /* Notion Card / Component Background */
-    --border-color: #2f2f2f;         /* Notion Subtle Border */
-    --text-color: #d4d4d4;           /* Notion Main Text */
-    --text-sub: #787774;             /* Notion Sub Text */
+    --bg-color: #191919;            
+    --card-bg: #202020;             
+    --card-hover-bg: #262626;
+    --card-hover-border: #404040;
+    --border-color: #2f2f2f;         
+    --text-color: #d4d4d4;           
+    --text-title: #e3e3e3;
+    --text-sub: #787774;             
     --color-empty: #252525;
-    --color-empty-border: #2f2f2f;
-    --color-filled: #2eaadc;         /* Notion Accent Blue */
-    --color-filled-border: #258db8;
+    --color-filled: #2eaadc;         
+    --overlay-bg: rgba(0,0,0,0.6);
+    --shadow-color: rgba(0, 0, 0, 0.6);
+
+    /* テーマ連動カラー (ダークモード時: ホワイト) */
+    --theme-dynamic-color: #ffffff;
+    --theme-dynamic-border: #404040;
+    --theme-dynamic-text-light: false;
+  }
+
+  /* Notion Light Theme */
+  :root[data-theme="light"] {
+    --bg-color: #ffffff;            
+    --card-bg: #f7f6f3;             
+    --card-hover-bg: #f0efeC;
+    --card-hover-border: #d0ceca;
+    --border-color: #e9e9e8;         
+    --text-color: #37352f;           
+    --text-title: #222222;
+    --text-sub: #9b9a97;             
+    --color-empty: #ecebe8;
+    --color-filled: #0b6e99;         
+    --overlay-bg: rgba(15, 15, 15, 0.4);
+    --shadow-color: rgba(15, 15, 15, 0.1);
+
+    /* テーマ連動カラー (ライトモード時: ブラック) */
+    --theme-dynamic-color: #191919;
+    --theme-dynamic-border: #37352f;
+    --theme-dynamic-text-light: true;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,6 +58,7 @@
     font-size: 14px;
     position: relative;
     overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
   }
 
   /* ヘッダー */
@@ -52,20 +85,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-    transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    transition: background 0.2s, border-color 0.2s, transform 0.1s, color 0.2s;
   }
   .icon-btn:hover {
-    background: #2a2a2a;
-    border-color: #3f3f3f;
+    background: var(--card-hover-bg);
+    border-color: var(--card-hover-border);
   }
   .icon-btn:active {
     transform: scale(0.95);
   }
   .icon-btn.active {
-    background: #2eaadc;
-    border-color: #2eaadc;
+    background: var(--color-filled);
+    border-color: var(--color-filled);
     color: white;
   }
 
@@ -74,7 +105,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: var(--overlay-bg);
     z-index: 150;
     backdrop-filter: blur(2px);
   }
@@ -93,7 +124,7 @@
     border-bottom-left-radius: 20px;
     z-index: 200;
     padding: 24px;
-    transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -112,7 +143,7 @@
   .sidebar-title {
     font-weight: 600;
     font-size: 15px;
-    color: #e3e3e3;
+    color: var(--text-title);
   }
   .close-btn {
     background: var(--bg-color);
@@ -121,13 +152,12 @@
     width: 28px;
     height: 28px;
     color: var(--text-sub);
-    font-size: 14px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .close-btn:hover { color: var(--text-color); border-color: #444; }
+  .close-btn:hover { color: var(--text-color); border-color: var(--card-hover-border); }
 
   /* トグルスイッチ */
   .setting-item {
@@ -147,7 +177,7 @@
     position: absolute;
     cursor: pointer;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #333;
+    background-color: var(--border-color);
     transition: .2s;
     border-radius: 22px;
   }
@@ -158,11 +188,12 @@
     width: 16px;
     left: 3px;
     bottom: 3px;
-    background-color: #e3e3e3;
+    background-color: var(--bg-color);
     transition: .2s;
     border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
   }
-  input:checked + .slider { background-color: #2eaadc; }
+  input:checked + .slider { background-color: var(--color-filled); }
   input:checked + .slider:before { transform: translateX(18px); background-color: #fff; }
 
   /* クイックチェックパネル */
@@ -196,12 +227,10 @@
     cursor: pointer;
     user-select: none;
     font-size: 13px;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
   }
-  .quick-check-item.checked {
-    border-color: #2eaadc;
-    background: rgba(46, 170, 220, 0.15);
-    color: #45b7e5;
+  .quick-check-item .material-icons {
+    font-size: 16px;
   }
 
   /* トラッカー一覧 */
@@ -212,7 +241,7 @@
     position: relative;
   }
 
-  /* カードスタイル & 立体浮き上がりホバーアニメーション */
+  /* カードスタイル */
   .tracker-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -220,17 +249,21 @@
     padding: 14px;
     position: relative;
     will-change: transform, box-shadow;
+    cursor: grab;
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
                 box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
                 background-color 0.25s ease, 
                 border-color 0.25s ease;
   }
+  .tracker-card:active {
+    cursor: grabbing;
+  }
   .tracker-card:hover {
     transform: translateY(-4px);
-    background-color: #262626;
-    border-color: #404040;
-    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.6), 
-                0 4px 8px -2px rgba(0, 0, 0, 0.4);
+    background-color: var(--card-hover-bg);
+    border-color: var(--card-hover-border);
+    box-shadow: 0 12px 24px -4px var(--shadow-color), 
+                0 4px 8px -2px var(--shadow-color);
   }
   .tracker-card.dragging {
     opacity: 0.3;
@@ -239,7 +272,7 @@
     box-shadow: none !important;
   }
   .tracker-card.drag-over {
-    border-color: #2eaadc;
+    border-color: var(--color-filled);
     box-shadow: 0 0 12px rgba(46, 170, 220, 0.25) !important;
   }
 
@@ -249,23 +282,74 @@
     align-items: center;
     margin-bottom: 10px;
   }
-  .tracker-name { font-weight: 600; color: #e3e3e3; }
+  .tracker-name-wrapper {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    margin-right: 8px;
+    min-width: 0;
+  }
+  .tracker-name { 
+    font-weight: 600; 
+    color: var(--text-title); 
+    cursor: pointer;
+    user-select: none;
+    padding: 2px 4px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .tracker-name:hover {
+    background: rgba(125, 125, 125, 0.1);
+  }
+  .tracker-name-input {
+    font-weight: 600;
+    color: var(--text-title);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    width: 100%;
+    max-width: 200px;
+  }
+  .tracker-name-input:focus {
+    border-color: var(--color-filled);
+  }
   .tracker-header-actions {
     display: flex;
     align-items: center;
     gap: 8px;
   }
   
-  .drag-handle {
+  .delete-btn {
+    background: none;
+    border: none;
     color: var(--text-sub);
-    cursor: grab;
-    font-size: 16px;
-    padding: 2px 6px;
+    cursor: pointer;
+    padding: 4px;
     border-radius: 6px;
-    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease, color 0.2s, background 0.2s;
   }
-  .drag-handle:active { cursor: grabbing; }
-  .drag-handle:hover { color: var(--text-color); background: rgba(255,255,255,0.05); }
+  .tracker-card:hover .delete-btn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .delete-btn .material-icons {
+    font-size: 18px;
+  }
+  .delete-btn:hover {
+    color: #ff5555;
+    background: rgba(255, 85, 85, 0.1);
+  }
 
   /* 草グラフ構造 */
   .tracker-body {
@@ -291,9 +375,13 @@
   .graph-container {
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-x: auto;
     width: 100%;
-    align-items: flex-end;
+    align-items: flex-start;
+    scrollbar-width: none;
+  }
+  .graph-container::-webkit-scrollbar {
+    display: none;
   }
 
   .month-labels {
@@ -317,38 +405,56 @@
     gap: 3px;
     width: max-content;
   }
+  
   .day-block {
     width: 10px;
     height: 10px;
     background-color: var(--color-empty);
-    border: 1px solid var(--color-empty-border);
+    border: none;
     border-radius: 3px;
-  }
-  .day-block.filled {
-    background-color: var(--color-filled);
-    border-color: var(--color-filled-border);
+    transition: background-color 0.15s ease;
   }
 
-  /* 2週間1列表示モード用スタイル調整 */
-  .mode-2weeks .weekday-labels,
-  .mode-2weeks .month-labels,
-  .mode-2weeks .drag-handle {
+  /* 4週間1列コンパクト表示モード */
+  .mode-4weeks {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .mode-4weeks .tracker-header {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    max-width: 40%;
+  }
+  .mode-4weeks .weekday-labels,
+  .mode-4weeks .month-labels {
     display: none !important;
   }
-  .mode-2weeks .grid {
+  .mode-4weeks .tracker-body {
+    padding-bottom: 0;
+    flex-grow: 1;
+    justify-content: flex-start;
+    overflow: hidden;
+  }
+  .mode-4weeks .graph-container {
+    width: 100%;
+    align-items: flex-start;
+    overflow-x: auto;
+  }
+  .mode-4weeks .grid {
     display: flex !important;
     flex-direction: row;
-    gap: 5px;
-    width: 100%;
+    gap: 4px;
+    width: max-content;
     justify-content: flex-start;
   }
-  .mode-2weeks .tracker-body {
-    padding-bottom: 0;
-  }
-  .mode-2weeks .day-block {
-    width: 14px;
-    height: 14px;
-    border-radius: 4px;
+  .mode-4weeks .day-block {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
   }
 
   /* モーダル */
@@ -356,7 +462,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.6);
+    background: var(--overlay-bg);
     backdrop-filter: blur(4px);
     align-items: center;
     justify-content: center;
@@ -367,11 +473,11 @@
     border: 1px solid var(--border-color);
     border-radius: 20px;
     padding: 20px;
-    width: 300px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    width: 320px;
+    box-shadow: 0 10px 30px var(--shadow-color);
   }
-  .modal h3 { margin-bottom: 14px; font-size: 15px; color: #e3e3e3; }
-  .modal input {
+  .modal h3 { margin-bottom: 14px; font-size: 15px; color: var(--text-title); }
+  .modal input[type="text"] {
     width: 100%;
     padding: 10px 14px;
     background: var(--bg-color);
@@ -381,9 +487,53 @@
     margin-bottom: 16px;
     outline: none;
   }
-  .modal input:focus {
-    border-color: #2eaadc;
+  .modal input[type="text"]:focus {
+    border-color: var(--color-filled);
   }
+
+  /* 丸型カラーパレット */
+  .color-picker-label {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 10px;
+    display: block;
+  }
+  .color-palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding: 4px 0;
+  }
+  .color-option {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.1);
+  }
+  .color-option:hover {
+    transform: scale(1.15);
+  }
+  .color-option.selected {
+    transform: scale(1.2);
+    border-color: var(--text-title);
+    box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--text-title);
+  }
+  .color-option .check-icon {
+    font-size: 15px;
+    display: none;
+    user-select: none;
+  }
+  .color-option.selected .check-icon {
+    display: block;
+  }
+
   .modal-actions {
     display: flex;
     justify-content: flex-end;
@@ -399,10 +549,12 @@
     font-size: 13px;
   }
   .modal-actions button:hover {
-    background: #2a2a2a;
+    background: var(--card-hover-bg);
   }
-  .btn-primary { background: #2eaadc !important; color: white !important; border: none !important; }
-  .btn-primary:hover { background: #258db8 !important; }
+  .btn-primary { background: var(--color-filled) !important; color: white !important; border: none !important; }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-danger { background: #e54d42 !important; color: white !important; border: none !important; }
+  .btn-danger:hover { background: #c83b31 !important; }
 </style>
 </head>
 <body>
@@ -410,9 +562,9 @@
   <!-- ヘッダー -->
   <div class="header">
     <div class="controls">
-      <button class="icon-btn" id="toggle-check-btn" title="今日の完了確認">✓</button>
-      <button class="icon-btn" id="add-tracker-btn" title="トラッカーの追加">＋</button>
-      <button class="icon-btn" id="open-sidebar-btn" title="設定">⚙️</button>
+      <button class="icon-btn" id="toggle-check-btn" title="今日の完了確認"><span class="material-icons">done</span></button>
+      <button class="icon-btn" id="add-tracker-btn" title="トラッカーの追加"><span class="material-icons">add</span></button>
+      <button class="icon-btn" id="open-sidebar-btn" title="設定"><span class="material-icons">settings</span></button>
     </div>
   </div>
 
@@ -421,12 +573,19 @@
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-title">設定</span>
-      <button class="close-btn" id="close-sidebar-btn">✕</button>
+      <button class="close-btn" id="close-sidebar-btn"><span class="material-icons">close</span></button>
     </div>
     <div class="setting-item">
-      <span>2週間コンパクト表示</span>
+      <span>4週間コンパクト表示</span>
       <label class="switch">
-        <input type="checkbox" id="toggle-2weeks-mode">
+        <input type="checkbox" id="toggle-4weeks-mode">
+        <span class="slider"></span>
+      </label>
+    </div>
+    <div class="setting-item">
+      <span>ライトテーマ</span>
+      <label class="switch">
+        <input type="checkbox" id="toggle-theme-mode">
         <span class="slider"></span>
       </label>
     </div>
@@ -439,10 +598,13 @@
 
   <div class="tracker-list" id="tracker-list"></div>
 
+  <!-- トラッカー追加モーダル -->
   <div class="modal-overlay" id="modal">
     <div class="modal">
       <h3>新しいトラッカーを追加</h3>
       <input type="text" id="tracker-name-input" placeholder="習慣の名前 (例: 読書)" maxlength="25">
+      <span class="color-picker-label">テーマカラーを選択:</span>
+      <div class="color-palette" id="add-color-palette"></div>
       <div class="modal-actions">
         <button id="cancel-btn">キャンセル</button>
         <button class="btn-primary" id="save-btn">追加</button>
@@ -450,9 +612,51 @@
     </div>
   </div>
 
+  <!-- カラー変更モーダル -->
+  <div class="modal-overlay" id="color-modal">
+    <div class="modal">
+      <h3>カラーを変更</h3>
+      <div class="color-palette" id="edit-color-palette"></div>
+      <div class="modal-actions">
+        <button id="color-cancel-btn">キャンセル</button>
+        <button class="btn-primary" id="color-save-btn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 削除確認モーダル -->
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <h3>トラッカーの削除</h3>
+      <p style="color: var(--text-sub); font-size: 13px; margin-bottom: 16px;" id="delete-modal-text">本当に削除しますか？</p>
+      <div class="modal-actions">
+        <button id="delete-cancel-btn">キャンセル</button>
+        <button class="btn-danger" id="delete-confirm-btn">削除</button>
+      </div>
+    </div>
+  </div>
+
 <script>
+  // カラー定義 (レッドを含み、ホワイト/ブラックはテーマ連動変数1色として統合)
+  const COLOR_PALETTE = [
+    { id: 'blue', name: 'ブルー', hex: '#2eaadc', textLight: true },
+    { id: 'green', name: 'グリーン', hex: '#2eac6d', textLight: true },
+    { id: 'purple', name: 'パープル', hex: '#9a6dd7', textLight: true },
+    { id: 'pink', name: 'ピンク', hex: '#e056fd', textLight: true },
+    { id: 'red', name: 'レッド', hex: '#ff5252', textLight: true },
+    { id: 'orange', name: 'オレンジ', hex: '#ff793f', textLight: true },
+    { id: 'yellow', name: 'イエロー', hex: '#f7b731', textLight: false },
+    { id: 'theme-dynamic', name: 'テーマ連動', hex: 'var(--theme-dynamic-color)', border: 'var(--theme-dynamic-border)', isDynamic: true }
+  ];
+
   let trackers = JSON.parse(localStorage.getItem('github-trackers') || '[]');
-  let is2WeeksMode = localStorage.getItem('github-tracker-2weeks') === 'true';
+  let is4WeeksMode = localStorage.getItem('github-tracker-4weeks') === 'true';
+  let isLightTheme = localStorage.getItem('github-tracker-theme') === 'light';
+  let deletingTrackerId = null;
+  let editingColorTrackerId = null;
+
+  let selectedAddColor = COLOR_PALETTE[0].hex;
+  let selectedEditColor = COLOR_PALETTE[0].hex;
 
   const trackerListEl = document.getElementById('tracker-list');
   const quickCheckPanel = document.getElementById('quick-check-panel');
@@ -463,15 +667,37 @@
   const closeSidebarBtn = document.getElementById('close-sidebar-btn');
   const sidebar = document.getElementById('sidebar');
   const sidebarOverlay = document.getElementById('sidebar-overlay');
-  const toggle2WeeksModeInput = document.getElementById('toggle-2weeks-mode');
+  const toggle4WeeksModeInput = document.getElementById('toggle-4weeks-mode');
+  const toggleThemeModeInput = document.getElementById('toggle-theme-mode');
   
+  // モーダル elements
   const modal = document.getElementById('modal');
   const trackerNameInput = document.getElementById('tracker-name-input');
+  const addColorPalette = document.getElementById('add-color-palette');
   const saveBtn = document.getElementById('save-btn');
   const cancelBtn = document.getElementById('cancel-btn');
 
+  const colorModal = document.getElementById('color-modal');
+  const editColorPalette = document.getElementById('edit-color-palette');
+  const colorSaveBtn = document.getElementById('color-save-btn');
+  const colorCancelBtn = document.getElementById('color-cancel-btn');
+
+  const deleteModal = document.getElementById('delete-modal');
+  const deleteModalText = document.getElementById('delete-modal-text');
+  const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+  const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+
   let draggedCard = null;
   let draggedId = null;
+
+  // テーマ適用
+  function applyTheme(isLight) {
+    if (isLight) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
 
   function getTodayString() {
     const today = new Date();
@@ -480,6 +706,36 @@
 
   function saveState() {
     localStorage.setItem('github-trackers', JSON.stringify(trackers));
+  }
+
+  // 丸型カラーパレットの描画
+  function createPaletteUI(containerEl, currentSelectedHex, onSelectCallback) {
+    containerEl.innerHTML = '';
+    COLOR_PALETTE.forEach(c => {
+      const opt = document.createElement('div');
+      opt.className = 'color-option' + (c.hex === currentSelectedHex ? ' selected' : '');
+      opt.style.backgroundColor = c.hex;
+      if (c.border) {
+        opt.style.borderColor = c.border;
+      }
+      opt.title = c.name;
+
+      const checkIcon = document.createElement('span');
+      checkIcon.className = 'material-icons check-icon';
+      checkIcon.textContent = 'check';
+      checkIcon.style.color = c.isDynamic 
+        ? (isLightTheme ? '#ffffff' : '#000000') 
+        : (c.textLight ? '#ffffff' : '#000000');
+
+      opt.appendChild(checkIcon);
+
+      opt.onclick = () => {
+        containerEl.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+        opt.classList.add('selected');
+        onSelectCallback(c.hex);
+      };
+      containerEl.appendChild(opt);
+    });
   }
 
   function render() {
@@ -493,49 +749,79 @@
     }
 
     trackers.forEach((t) => {
+      const cardColor = t.color || COLOR_PALETTE[0].hex;
       const card = document.createElement('div');
-      card.className = 'tracker-card' + (is2WeeksMode ? ' mode-2weeks' : '');
-      card.draggable = !is2WeeksMode;
+      card.className = 'tracker-card' + (is4WeeksMode ? ' mode-4weeks' : '');
+      card.draggable = !is4WeeksMode;
       card.dataset.id = t.id;
 
       const isTodayDone = !!t.history[todayStr];
 
       card.innerHTML = `
         <div class="tracker-header">
-          <span class="tracker-name">${t.name}</span>
+          <div class="tracker-name-wrapper">
+            <span class="tracker-name" id="name-span-${t.id}" title="ダブルクリックでタイトル編集">${t.name}</span>
+          </div>
           <div class="tracker-header-actions">
-            <span class="drag-handle" title="ドラッグして並べ替え">≡</span>
+            <button class="delete-btn" id="delete-btn-${t.id}" title="削除"><span class="material-icons">close</span></button>
           </div>
         </div>
         <div class="tracker-body">
           <div class="weekday-labels">
             <div>月</div><div></div><div>水</div><div></div><div>金</div><div></div><div>日</div>
           </div>
-          <div class="graph-container">
+          <div class="graph-container" id="container-${t.id}">
             <div class="month-labels" id="month-labels-${t.id}"></div>
             <div class="grid" id="grid-${t.id}"></div>
           </div>
         </div>
       `;
 
-      if (!is2WeeksMode) {
+      // カード全体ダブルクリックで色変更
+      card.addEventListener('dblclick', (e) => {
+        if (e.target.closest('.tracker-name') || e.target.closest('.delete-btn') || e.target.closest('input')) {
+          return;
+        }
+        openColorModal(t.id, cardColor);
+      });
+
+      if (!is4WeeksMode) {
         setupDragEvents(card, t.id);
       }
       
       trackerListEl.appendChild(card);
 
+      const nameSpan = card.querySelector(`#name-span-${t.id}`);
+      nameSpan.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        startInlineEdit(t.id, nameSpan);
+      });
+
+      const deleteBtn = card.querySelector(`#delete-btn-${t.id}`);
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDeleteModal(t.id, t.name);
+      });
+
       const gridEl = card.querySelector(`#grid-${t.id}`);
       const monthLabelsEl = card.querySelector(`#month-labels-${t.id}`);
+      const containerEl = card.querySelector(`#container-${t.id}`);
       const today = new Date();
 
-      if (is2WeeksMode) {
-        for (let i = 13; i >= 0; i--) {
+      if (is4WeeksMode) {
+        for (let i = 27; i >= 0; i--) {
           const d = new Date(today);
           d.setDate(today.getDate() - i);
           const dateStr = d.toISOString().split('T')[0];
 
           const block = document.createElement('div');
           block.className = 'day-block' + (t.history[dateStr] ? ' filled' : '');
+          if (t.history[dateStr]) {
+            block.style.backgroundColor = cardColor;
+            if (cardColor === 'var(--theme-dynamic-color)') {
+              block.style.border = '1px solid var(--border-color)';
+            }
+          }
           block.title = `${dateStr}: ${t.history[dateStr] ? '完了' : '未完了'}`;
           gridEl.appendChild(block);
         }
@@ -575,22 +861,125 @@
 
             const block = document.createElement('div');
             block.className = 'day-block' + (t.history[dateStr] ? ' filled' : '');
+            if (t.history[dateStr]) {
+              block.style.backgroundColor = cardColor;
+              if (cardColor === 'var(--theme-dynamic-color)') {
+                block.style.border = '1px solid var(--border-color)';
+              }
+            }
             block.title = `${dateStr}: ${t.history[dateStr] ? '完了' : '未完了'}`;
             gridEl.appendChild(block);
           }
         }
       }
 
+      requestAnimationFrame(() => {
+        containerEl.scrollLeft = containerEl.scrollWidth;
+      });
+
       const checkItem = document.createElement('div');
       checkItem.className = 'quick-check-item' + (isTodayDone ? ' checked' : '');
-      checkItem.innerHTML = `<span>${isTodayDone ? '✓' : '○'}</span> <span>${t.name}</span>`;
+      if (isTodayDone) {
+        checkItem.style.borderColor = cardColor;
+        checkItem.style.color = cardColor;
+        checkItem.style.backgroundColor = cardColor === 'var(--theme-dynamic-color)' ? 'rgba(125,125,125,0.15)' : cardColor + '26';
+      }
+      checkItem.innerHTML = `<span class="material-icons">${isTodayDone ? 'check_box' : 'check_box_outline_blank'}</span> <span>${t.name}</span>`;
       checkItem.onclick = () => toggleToday(t.id);
       quickCheckList.appendChild(checkItem);
     });
   }
 
+  function openColorModal(id, currentHex) {
+    editingColorTrackerId = id;
+    selectedEditColor = currentHex;
+    createPaletteUI(editColorPalette, selectedEditColor, (hex) => {
+      selectedEditColor = hex;
+    });
+    colorModal.style.display = 'flex';
+  }
+
+  function closeColorModal() {
+    editingColorTrackerId = null;
+    colorModal.style.display = 'none';
+  }
+
+  colorCancelBtn.onclick = closeColorModal;
+  colorSaveBtn.onclick = () => {
+    if (editingColorTrackerId) {
+      const tracker = trackers.find(t => t.id === editingColorTrackerId);
+      if (tracker) {
+        tracker.color = selectedEditColor;
+        saveState();
+        render();
+      }
+    }
+    closeColorModal();
+  };
+
+  function startInlineEdit(id, nameSpan) {
+    const currentName = nameSpan.textContent;
+    const parent = nameSpan.parentElement;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tracker-name-input';
+    input.value = currentName;
+    input.maxLength = 25;
+
+    parent.replaceChild(input, nameSpan);
+    input.focus();
+    input.select();
+
+    const saveEdit = () => {
+      const newName = input.value.trim();
+      if (newName && newName !== currentName) {
+        const tracker = trackers.find(t => t.id === id);
+        if (tracker) {
+          tracker.name = newName;
+          saveState();
+        }
+      }
+      render();
+    };
+
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        saveEdit();
+      } else if (e.key === 'Escape') {
+        render();
+      }
+    });
+  }
+
+  function openDeleteModal(id, name) {
+    deletingTrackerId = id;
+    deleteModalText.textContent = `「${name}」を削除してもよろしいですか？`;
+    deleteModal.style.display = 'flex';
+  }
+
+  function closeDeleteModal() {
+    deletingTrackerId = null;
+    deleteModal.style.display = 'none';
+  }
+
+  deleteCancelBtn.onclick = closeDeleteModal;
+  deleteConfirmBtn.onclick = () => {
+    if (deletingTrackerId) {
+      trackers = trackers.filter(t => t.id !== deletingTrackerId);
+      saveState();
+      render();
+    }
+    closeDeleteModal();
+  };
+
   function setupDragEvents(card, id) {
     card.addEventListener('dragstart', (e) => {
+      if (e.target.tagName.toLowerCase() === 'input') {
+        e.preventDefault();
+        return;
+      }
       draggedCard = card;
       draggedId = id;
       e.dataTransfer.effectAllowed = 'move';
@@ -651,7 +1040,6 @@
               const deltaY = firstTop - lastTop;
 
               if (deltaY !== 0) {
-                // アニメーション完了までホバー判定を一時的に無効化
                 c.style.pointerEvents = 'none';
                 c.style.transform = `translateY(${deltaY}px)`;
                 c.style.transition = 'none';
@@ -664,7 +1052,7 @@
                     setTimeout(() => {
                       c.style.transform = '';
                       c.style.transition = '';
-                      c.style.pointerEvents = ''; // ホバー判定を復元
+                      c.style.pointerEvents = '';
                     }, 300);
                   });
                 });
@@ -690,10 +1078,11 @@
     render();
   }
 
-  function addTracker(name) {
+  function addTracker(name, color) {
     const newTracker = {
       id: crypto.randomUUID(),
       name: name,
+      color: color,
       history: {}
     };
     trackers.unshift(newTracker);
@@ -701,7 +1090,6 @@
     render();
   }
 
-  /* サイドバー操作 */
   function openSidebar() {
     sidebar.classList.add('open');
     sidebarOverlay.classList.add('open');
@@ -715,11 +1103,19 @@
   closeSidebarBtn.onclick = closeSidebar;
   sidebarOverlay.onclick = closeSidebar;
 
-  // 2週間表示切り替え
-  toggle2WeeksModeInput.checked = is2WeeksMode;
-  toggle2WeeksModeInput.onchange = (e) => {
-    is2WeeksMode = e.target.checked;
-    localStorage.setItem('github-tracker-2weeks', is2WeeksMode);
+  toggle4WeeksModeInput.checked = is4WeeksMode;
+  toggle4WeeksModeInput.onchange = (e) => {
+    is4WeeksMode = e.target.checked;
+    localStorage.setItem('github-tracker-4weeks', is4WeeksMode);
+    render();
+  };
+
+  applyTheme(isLightTheme);
+  toggleThemeModeInput.checked = isLightTheme;
+  toggleThemeModeInput.onchange = (e) => {
+    isLightTheme = e.target.checked;
+    localStorage.setItem('github-tracker-theme', isLightTheme ? 'light' : 'dark');
+    applyTheme(isLightTheme);
     render();
   };
 
@@ -730,6 +1126,10 @@
 
   addTrackerBtn.onclick = () => {
     trackerNameInput.value = '';
+    selectedAddColor = COLOR_PALETTE[0].hex;
+    createPaletteUI(addColorPalette, selectedAddColor, (hex) => {
+      selectedAddColor = hex;
+    });
     modal.style.display = 'flex';
     trackerNameInput.focus();
   };
@@ -741,7 +1141,7 @@
   saveBtn.onclick = () => {
     const name = trackerNameInput.value.trim();
     if (name) {
-      addTracker(name);
+      addTracker(name, selectedAddColor);
       modal.style.display = 'none';
     }
   };
@@ -749,6 +1149,12 @@
   trackerNameInput.onkeydown = (e) => {
     if (e.key === 'Enter') saveBtn.click();
   };
+
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('.graph-container').forEach(el => {
+      el.scrollLeft = el.scrollWidth;
+    });
+  });
 
   render();
 </script>
