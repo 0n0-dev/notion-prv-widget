@@ -18,7 +18,14 @@
     :root {
       --grad-start: #00c6ff;
       --grad-end: #0072ff;
-      --bg-color: #191919; /* Notionダークモードの背景色 */
+      --bg-color: #191919; /* デフォルトのダークモード背景色 */
+      --text-color: #ffffff;
+    }
+
+    /* 白背景モード用スタイルの拡張 */
+    body.light-mode {
+      --bg-color: #ffffff;
+      --text-color: #333333;
     }
 
     * {
@@ -38,10 +45,11 @@
       font-family: 'Roboto', sans-serif;
       text-align: center;
       background-color: var(--bg-color);
-      color: #ffffff;
+      color: var(--text-color);
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     .nowtime {
@@ -53,7 +61,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      transition: background-color 0.2s ease;
     }
 
     /* 一列表示用のCSS */
@@ -62,6 +70,11 @@
       align-items: baseline;
       gap: 12px;
       padding-right: 25px;
+
+      /* 一列表示時は親全体にグラデーションを接続適用 */
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
 
     #time {
@@ -76,10 +89,13 @@
       -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の時間（時・分）のサイズを日付と同じ24pxに揃える */
+    /* 一列表示時の時間（文字サイズ42px、個別グラデーション解除） */
     .nowtime.inline-layout #time {
-      font-size: 24px;
-      line-height: 28px;
+      font-size: 42px;
+      line-height: 48px;
+      background: none;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: inherit;
     }
 
     #sec {
@@ -88,8 +104,6 @@
       margin-left: 2px;
       vertical-align: baseline;
       display: inline-block;
-      -webkit-text-fill-color: initial;
-      color: var(--grad-end); /* 秒数の色をグラデーションに合わせる */
     }
 
     /* 一列表示時でも秒数のサイズを18pxに維持 */
@@ -99,6 +113,7 @@
     }
 
     #date-container {
+      width: 100%;
       padding-top: 5px;
       margin-top: 2px;
       display: flex;
@@ -112,6 +127,7 @@
 
     /* 一列表示時の日付コンテナ調整（区切りライン削除） */
     .nowtime.inline-layout #date-container {
+      width: auto;
       padding-top: 0;
       margin-top: 0;
       border-top: none;
@@ -131,11 +147,23 @@
       -webkit-text-fill-color: transparent;
     }
 
+    /* 一列表示時の日付（文字サイズを42pxに変更＆個別グラデーション解除） */
+    .nowtime.inline-layout #date {
+      font-size: 42px;
+      line-height: 48px;
+      background: none;
+      -webkit-background-clip: initial;
+      -webkit-text-fill-color: inherit;
+    }
+
     .color-btn-wrapper {
       position: absolute;
       right: -24px;
       display: flex;
       align-items: center;
+
+      /* 親要素の文字透過の影響を回避 */
+      -webkit-text-fill-color: initial;
     }
 
     .color-btn {
@@ -152,13 +180,13 @@
       opacity: 0.9;
     }
 
-    /* コンパクト化した設定ポップアップ */
+    /* 設定ポップアップ：常に時計の下側に表示されるよう位置を設定 */
     .color-picker-popover {
       display: none;
       position: absolute;
-      top: 50%;
+      top: calc(100% + 8px); /* 時計の下端から8px下に配置 */
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translateX(-50%);
       background: #252525;
       border: 1px solid #373737;
       border-radius: 10px;
@@ -171,6 +199,9 @@
       align-items: center;
       justify-content: space-between;
       gap: 6px;
+
+      /* 親要素の文字透過の影響を回避 */
+      -webkit-text-fill-color: initial;
     }
 
     .color-picker-popover.active {
@@ -355,7 +386,7 @@
     </div>
     
     <div id="date-container">
-      <span id="date"></span>
+      <span id="date">--/-- ---</span>
       
       <div class="color-btn-wrapper">
         <button class="color-btn" id="toggle-picker" title="設定の変更">⚙️</button>
@@ -374,6 +405,13 @@
               <label for="toggle-layout">一列表示</label>
               <label class="switch">
                 <input type="checkbox" id="toggle-layout">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="custom-row">
+              <label for="toggle-bg">背景色を白にする</label>
+              <label class="switch">
+                <input type="checkbox" id="toggle-bg">
                 <span class="slider"></span>
               </label>
             </div>
@@ -437,8 +475,7 @@
   <script>
     const day = function() {
       const n = dayjs(new Date());
-      
-      // コロンを再生成せず、テキスト部分のみを更新して点滅を維持する
+      // 改変元と同じようにパーツごとにテキストを流し込む（#colonを破壊しないため点滅が持続する）
       document.getElementById("hour").textContent = n.format("HH");
       document.getElementById("min").textContent = n.format("mm");
       document.getElementById("sec").textContent = n.format("ss");
@@ -454,10 +491,12 @@
     const colorEnd = document.getElementById("color-end");
     const nowtimeBox = document.getElementById("nowtime-box");
     const toggleLayout = document.getElementById("toggle-layout");
+    const toggleBg = document.getElementById("toggle-bg");
 
     const STORAGE_KEY_START = "mc_clock_grad_start";
     const STORAGE_KEY_END = "mc_clock_grad_end";
     const STORAGE_KEY_INLINE = "mc_clock_inline_layout";
+    const STORAGE_KEY_LIGHT_BG = "mc_clock_light_bg";
 
     // ページ名定義
     const pageNames = ["表示", "カスタム", "季節", "空"];
@@ -516,6 +555,15 @@
       } catch (e) {}
     }
 
+    // 背景色設定の保持・適用
+    function loadSavedBg() {
+      try {
+        const isLight = localStorage.getItem(STORAGE_KEY_LIGHT_BG) === "true";
+        toggleBg.checked = isLight;
+        document.body.classList.toggle("light-mode", isLight);
+      } catch (e) {}
+    }
+
     toggleLayout.addEventListener("change", (e) => {
       const isInline = e.target.checked;
       nowtimeBox.classList.toggle("inline-layout", isInline);
@@ -524,8 +572,17 @@
       } catch (e) {}
     });
 
+    toggleBg.addEventListener("change", (e) => {
+      const isLight = e.target.checked;
+      document.body.classList.toggle("light-mode", isLight);
+      try {
+        localStorage.setItem(STORAGE_KEY_LIGHT_BG, isLight);
+      } catch (e) {}
+    });
+
     loadSavedGradient();
     loadSavedLayout();
+    loadSavedBg();
 
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
