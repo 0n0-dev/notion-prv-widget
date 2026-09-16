@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Notion Style Weekly Planner</title>
+<style>
+  :root {
+    --bg-color: #191919;
+    --text-color: #9b9a97;
+    --text-main: #ffffff;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --hover-bg: rgba(255, 255, 255, 0.03);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    padding: 24px;
+    font-size: 14px;
+  }
+
+  /* 週ごとのボード全体を横並びにするコンテナ */
+  .week-container {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  /* 各曜日のカラム */
+  .day-column {
+    flex: 1;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 曜日のヘッダー部分（例: Mon 🌙） */
+  .day-header {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-main);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ToDoアイテムのエリア */
+  .todo-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .todo-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    color: var(--text-color);
+    cursor: pointer;
+  }
+
+  .todo-item input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--text-color);
+    border-radius: 2px;
+    background-color: transparent;
+    cursor: pointer;
+    display: grid;
+    place-content: center;
+  }
+
+  .todo-item input[type="checkbox"]:checked {
+    background-color: #2383e2;
+    border-color: #2383e2;
+  }
+
+  .todo-item input[type="checkbox"]:checked::before {
+    content: "";
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
+  }
+
+  .todo-item input[type="checkbox"]:checked + span {
+    text-decoration: line-through;
+    color: rgba(155, 154, 151, 0.6);
+  }
+
+  .todo-text {
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+
+  <div class="week-container">
+    <!-- 月曜日 -->
+    <div class="day-column">
+      <div class="day-header">Mon 🌙</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 火曜日 -->
+    <div class="day-column">
+      <div class="day-header">Tue 💧</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 水曜日 -->
+    <div class="day-column">
+      <div class="day-header">Wed 💧</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 木曜日 -->
+    <div class="day-column">
+      <div class="day-header">Thu 🌵</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 金曜日 -->
+    <div class="day-column">
+      <div class="day-header">Fri 🌻</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- 土日 -->
+    <div class="day-column">
+      <div class="day-header">Sat & San 💫</div>
+      <div class="todo-section">
+        <label class="todo-item">
+          <input type="checkbox">
+          <span class="todo-text">ToDo</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
