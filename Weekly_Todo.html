@@ -1,185 +1,423 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notion Style Weekly Planner</title>
-<style>
-  :root {
-    --bg-color: #191919;
-    --text-color: #9b9a97;
-    --text-main: #ffffff;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --hover-bg: rgba(255, 255, 255, 0.03);
-  }
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Weekly Todo Widget with Today View</title>
+  <style>
+    /* Notionのダークモード風の背景と基本設定 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+    body {
+      background-color: #191919; /* Notionのダークモード背景色 */
+      color: #9b9a97; /* Notionの通常テキスト（グレー） */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
 
-  body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-    padding: 24px;
-    font-size: 14px;
-  }
+    /* 全体レイアウト：左側に今日のブロック、右側に1週間のカレンダー */
+    .main-container {
+      display: flex;
+      gap: 32px;
+      width: 100%;
+      max-width: 1100px;
+      align-items: flex-start;
+    }
 
-  /* 週ごとのボード全体を横並びにするコンテナ */
-  .week-container {
-    display: flex;
-    gap: 16px;
-    overflow-x: auto;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-color);
-  }
+    /* 左側の「今日」専用カード */
+    .today-sidebar-card {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 16px;
+      width: 280px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
 
-  /* 各曜日のカラム */
-  .day-column {
-    flex: 1;
-    min-width: 160px;
-    display: flex;
-    flex-direction: column;
-  }
+    .today-title-badge {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #2eaadc;
+      font-weight: 700;
+    }
 
-  /* 曜日のヘッダー部分（例: Mon 🌙） */
-  .day-header {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--text-main);
-    padding-bottom: 8px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+    /* カレンダーグリッド（3列×2行） */
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px 24px;
+      flex-grow: 1;
+    }
 
-  /* ToDoアイテムのエリア */
-  .todo-section {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+    /* 各曜日のカードブロック */
+    .day-card {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.01);
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
 
-  .todo-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 0;
-    color: var(--text-color);
-    cursor: pointer;
-  }
+    .day-card.is-today {
+      border-color: rgba(46, 170, 220, 0.4); /* 今日はうっすら青枠で強調 */
+      background: rgba(46, 170, 220, 0.02);
+    }
 
-  .todo-item input[type="checkbox"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border: 1px solid var(--text-color);
-    border-radius: 2px;
-    background-color: transparent;
-    cursor: pointer;
-    display: grid;
-    place-content: center;
-  }
+    /* 曜日ヘッダー部分（テキスト＋絵文字） */
+    .day-header {
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff; /* 曜日は白文字 */
+      padding-bottom: 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Notionの薄い区切り線 */
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-  .todo-item input[type="checkbox"]:checked {
-    background-color: #2383e2;
-    border-color: #2383e2;
-  }
+    /* ToDoアイテムのコンテナ */
+    .todo-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
 
-  .todo-item input[type="checkbox"]:checked::before {
-    content: "";
-    width: 4px;
-    height: 8px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-    margin-bottom: 2px;
-  }
+    /* チェックボックス付きToDoのスタイル */
+    .todo-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #9b9a97;
+      user-select: none;
+    }
 
-  .todo-item input[type="checkbox"]:checked + span {
-    text-decoration: line-through;
-    color: rgba(155, 154, 151, 0.6);
-  }
+    .todo-item input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+      background-color: transparent;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      flex-shrink: 0;
+      transition: background-color 0.1s, border-color 0.1s;
+    }
 
-  .todo-text {
-    user-select: none;
-  }
-</style>
+    .todo-item input[type="checkbox"]:checked {
+      background-color: #2eaadc; /* Notionのチェックボックス青色 */
+      border-color: #2eaadc;
+    }
+
+    /* チェック時のチェックマーク */
+    .todo-item input[type="checkbox"]::before {
+      content: "";
+      width: 4px;
+      height: 8px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) translate(-1px, -1px);
+      display: none;
+    }
+
+    .todo-item input[type="checkbox"]:checked::before {
+      display: block;
+    }
+
+    /* 入力欄（テキストエディタ風） */
+    .todo-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 14px;
+      width: 100%;
+      resize: none;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    .todo-input::placeholder {
+      color: rgba(155, 154, 151, 0.5);
+    }
+
+    /* チェックが入ったときの文字スタイル（取り消し線＆薄くする） */
+    .todo-item.completed .todo-input {
+      text-decoration: line-through;
+      color: rgba(155, 154, 151, 0.4);
+    }
+
+    /* レスポンシブ対応（画面が狭いときは縦並びに切り替え） */
+    @media (max-width: 900px) {
+      .main-container {
+        flex-direction: column;
+      }
+      .today-sidebar-card {
+        width: 100%;
+      }
+      .calendar-grid {
+        grid-template-columns: repeat(1, 1fr);
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
 
-  <div class="week-container">
-    <!-- 月曜日 -->
-    <div class="day-column">
-      <div class="day-header">Mon 🌙</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
+  <div class="main-container">
+    <!-- 左側：今日の曜日専用ブロック -->
+    <div class="today-sidebar-card" id="todaySidebar">
+      <div class="today-title-badge">Today's Focus</div>
+      <div class="day-header" id="todayHeaderEl">Today</div>
+      <div class="todo-list" id="todayTodoListEl">
+        <!-- 動的に挿入されます -->
       </div>
     </div>
 
-    <!-- 火曜日 -->
-    <div class="day-column">
-      <div class="day-header">Tue 💧</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 水曜日 -->
-    <div class="day-column">
-      <div class="day-header">Wed 💧</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 木曜日 -->
-    <div class="day-column">
-      <div class="day-header">Thu 🌵</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 金曜日 -->
-    <div class="day-column">
-      <div class="day-header">Fri 🌻</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
-      </div>
-    </div>
-
-    <!-- 土日 -->
-    <div class="day-column">
-      <div class="day-header">Sat & San 💫</div>
-      <div class="todo-section">
-        <label class="todo-item">
-          <input type="checkbox">
-          <span class="todo-text">ToDo</span>
-        </label>
-      </div>
-    </div>
+    <!-- 右側：1週間のカレンダーグリッド -->
+    <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
+  <script>
+    // 各曜日の定義（月曜始まり）
+    const days = [
+      { name: "Mon", emoji: "🌙" },
+      { name: "Tue", emoji: "💧" },
+      { name: "Wed", emoji: "💧" },
+      { name: "Thu", emoji: "🌵" },
+      { name: "Fri", emoji: "🌻" },
+      { name: "Sat & San", emoji: "💫" }
+    ];
+
+    // 本日の曜日キーを算出（日曜日ならSat & San、月〜土ならそのまま）
+    function getTodayKey() {
+      const jsDay = new Date().getDay(); // 0:日, 1:月, 2:火, 3:水, 4:木, 5:金, 6:土
+      if (jsDay === 0 || jsDay === 6) {
+        return "Sat & San";
+      }
+      const mapping = { 1: "Mon", 2: "Tue", 3: "Wed", 4: "Thu", 5: "Fri" };
+      return mapping[jsDay];
+    }
+
+    const STORAGE_KEY = 'notion_weekly_todos_v2';
+    let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+
+    const gridEl = document.getElementById('calendarGrid');
+    const todayTodoListEl = document.getElementById('todayTodoListEl');
+    const todayHeaderEl = document.getElementById('todayHeaderEl');
+
+    function saveData() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+    }
+
+    // データをDOM構造から収集して更新するヘルパー
+    function updateDataFromDOM() {
+      // カレンダー全体のDOMからデータを再構築
+      document.querySelectorAll('.calendar-grid .day-card').forEach((card, index) => {
+        const dayKey = days[index].name;
+        const items = [];
+        card.querySelectorAll('.todo-item').forEach(item => {
+          items.push({
+            checked: item.querySelector('input[type="checkbox"]').checked,
+            text: item.querySelector('.todo-input').value
+          });
+        });
+        savedData[dayKey] = items;
+      });
+      saveData();
+    }
+
+    function renderWidget() {
+      const todayKey = getTodayKey();
+
+      // --- 1. 右側カレンダーの描画 ---
+      gridEl.innerHTML = '';
+      days.forEach((day, dayIndex) => {
+        const dayKeyName = day.name;
+        const dayTodos = savedData[dayKeyName] || [{ checked: false, text: '' }];
+        const isToday = (dayKeyName === todayKey);
+
+        const card = document.createElement('div');
+        card.className = `day-card ${isToday ? 'is-today' : ''}`;
+
+        const header = document.createElement('div');
+        header.className = 'day-header';
+        header.innerHTML = `${day.name} ${day.emoji}`;
+        card.appendChild(header);
+
+        const list = document.createElement('div');
+        list.className = 'todo-list';
+
+        dayTodos.forEach((todo, todoIndex) => {
+          const itemEl = createTodoElement(dayKeyName, todoIndex, todo.text, todo.checked);
+          list.appendChild(itemEl);
+        });
+
+        card.appendChild(list);
+        gridEl.appendChild(card);
+      });
+
+      // --- 2. 左側「今日」ブロックの描画（右側と完全同期） ---
+      const todayInfo = days.find(d => d.name === todayKey) || days[0];
+      todayHeaderEl.innerHTML = `${todayInfo.name} ${todayInfo.emoji} (今日)`;
+      todayTodoListEl.innerHTML = '';
+
+      const todayTodos = savedData[todayKey] || [{ checked: false, text: '' }];
+      todayTodos.forEach((todo, todoIndex) => {
+        const itemEl = createTodoElement(todayKey, todoIndex, todo.text, todo.checked);
+        todayTodoListEl.appendChild(itemEl);
+      });
+    }
+
+    function createTodoElement(dayKey, todoIndex, text = '', checked = false) {
+      const label = document.createElement('label');
+      label.className = `todo-item ${checked ? 'completed' : ''}`;
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = checked;
+      checkbox.onchange = () => {
+        if (checkbox.checked) {
+          label.classList.add('completed');
+        } else {
+          label.classList.remove('completed');
+        }
+        updateDataFromDOM();
+        renderWidget(); // 同期のために再描画
+      };
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'todo-input';
+      input.value = text;
+      input.placeholder = 'ToDo';
+
+      // 入力時の保存
+      input.oninput = () => {
+        updateDataFromDOM();
+      };
+
+      // Enterキーで新しい行を追加
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          
+          // 現在のデータを最新に反映
+          updateDataFromDOM();
+
+          const currentItems = savedData[dayKey] || [];
+          // どのインデックスの要素か特定してその下に挿入
+          const targetCard = Array.from(gridEl.children).find(c => c.querySelector('.day-header').textContent.includes(dayKey)) 
+                             || document.getElementById('todaySidebar');
+          
+          // 対象のアイテムリスト内でのインデックスを調べる
+          const allInputs = Array.from(document.querySelectorAll(`.day-card, #todaySidebar`)).flatMap(card => {
+            if (card.querySelector('.day-header')?.textContent.includes(dayKey)) {
+              return Array.from(card.querySelectorAll('.todo-input'));
+            }
+            return [];
+          });
+
+          // 単純化のため、該当曜日の配列に要素を挿入して再描画
+          const currentDayItems = savedData[dayKey];
+          // どの行からEnterされたか特定
+          const cardEl = Array.from(gridEl.children).find(c => c.querySelector('.day-header').textContent.includes(dayKey));
+          // カレンダー側またはサイドバー側の要素から探す
+          const itemsInCalendar = cardEl ? Array.from(cardEl.querySelectorAll('.todo-item')) : [];
+          const itemsInSidebar = dayKey === getTodayKey() ? Array.from(todayTodoListEl.querySelectorAll('.todo-item')) : [];
+          
+          let clickedIndex = itemsInCalendar.indexOf(label);
+          if (clickedIndex === -1) clickedIndex = itemsInSidebar.indexOf(label);
+          if (clickedIndex === -1) clickedIndex = 0;
+
+          currentDayItems.splice(clickedIndex + 1, 0, { checked: false, text: '' });
+          savedData[dayKey] = currentDayItems;
+          saveData();
+          renderWidget();
+
+          // 新しい行の入力欄にフォーカス
+          setTimeout(() => {
+            // 再描画後にフォーカスをあてる処理
+            const refreshedCards = Array.from(gridEl.children).filter(c => c.querySelector('.day-header').textContent.includes(dayKey));
+            let targetInput = null;
+            if (refreshedCards.length > 0) {
+              targetInput = refreshedCards[0].querySelectorAll('.todo-input')[clickedIndex + 1];
+            }
+            if (!targetInput && dayKey === getTodayKey()) {
+              targetInput = todayTodoListEl.querySelectorAll('.todo-input')[clickedIndex + 1];
+            }
+            if (targetInput) {
+              targetInput.focus();
+              targetInput.selectionStart = targetInput.selectionEnd = targetInput.value.length;
+            }
+          }, 10);
+        }
+
+        // Backspaceで文字が空のときに前の行に戻る
+        if (e.key === 'Backspace' && input.value === '') {
+          updateDataFromDOM();
+          const currentDayItems = savedData[dayKey];
+          if (currentDayItems.length > 1) {
+            e.preventDefault();
+            
+            let clickedIndex = -1;
+            const cardEl = Array.from(gridEl.children).find(c => c.querySelector('.day-header').textContent.includes(dayKey));
+            if (cardEl) {
+              clickedIndex = Array.from(cardEl.querySelectorAll('.todo-item')).indexOf(label);
+            }
+            if (clickedIndex === -1 && dayKey === getTodayKey()) {
+              clickedIndex = Array.from(todayTodoListEl.querySelectorAll('.todo-item')).indexOf(label);
+            }
+
+            if (clickedIndex !== -1) {
+              currentDayItems.splice(clickedIndex, 1);
+              savedData[dayKey] = currentDayItems;
+              saveData();
+              renderWidget();
+
+              // ひとつ前の入力欄にフォーカス
+              setTimeout(() => {
+                const refreshedCard = Array.from(gridEl.children).find(c => c.querySelector('.day-header').textContent.includes(dayKey));
+                let prevInput = null;
+                if (refreshedCard) {
+                  prevInput = refreshedCard.querySelectorAll('.todo-input')[Math.max(0, clickedIndex - 1)];
+                }
+                if (prevInput) {
+                  prevInput.focus();
+                  prevInput.selectionStart = prevInput.selectionEnd = prevInput.value.length;
+                }
+              }, 10);
+            }
+          }
+        }
+      };
+
+      label.appendChild(checkbox);
+      label.appendChild(input);
+      return label;
+    }
+
+    // 初期描画
+    renderWidget();
+  </script>
 </body>
 </html>
