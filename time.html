@@ -117,7 +117,7 @@
 
     /* 日付コンテナ & 区切りライン */
     #date-container {
-      width: 100%; /* 元の幅に戻す */
+      width: 100%;
       padding-top: 5px;
       margin-top: 2px;
       display: flex;
@@ -366,15 +366,16 @@
       user-select: none;
     }
 
+    /* コロンの点滅設定 */
     #colon {
       margin: 0 2px;
       vertical-align: 8%;
-      animation: 1s linear infinite blink;
+      animation: blink 1s linear infinite;
     }
 
     @keyframes blink {
       0%, 49% { opacity: 1; }
-      100%, 50% { opacity: 0; }
+      50%, 100% { opacity: 0; }
     }
   </style>
 </head>
