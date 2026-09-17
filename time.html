@@ -59,7 +59,7 @@
       position: relative;
       display: flex;
       flex-direction: column;
-      background: transparent; /* ボックス背景を透明に修正 */
+      background: transparent;
     }
 
     /* 一列表示用のCSS */
@@ -104,14 +104,20 @@
       display: inline-block;
     }
 
+    /* 秒非表示スタイルの制御 */
+    .hide-seconds #sec {
+      display: none !important;
+    }
+
     /* 一列表示時でも秒数のサイズを18pxに維持 */
     .nowtime.inline-layout #sec {
       font-size: 18px;
       line-height: 18px;
     }
 
+    /* 日付コンテナ & 区切りライン */
     #date-container {
-      width: 100%;
+      width: 100%; /* 元の幅に戻す */
       padding-top: 5px;
       margin-top: 2px;
       display: flex;
@@ -192,7 +198,7 @@
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
       z-index: 100;
       width: 190px;
-      height: 70px;
+      height: 90px;
       flex-direction: row;
       align-items: center;
       justify-content: space-between;
@@ -376,7 +382,9 @@
 
   <!-- 時計表示エリア -->
   <div class="nowtime" id="nowtime-box">
-    <div id="time"></div>
+    <div id="time">
+      <span id="hour">00</span><span id="colon">:</span><span id="min">00</span><span id="sec">00</span>
+    </div>
     
     <div id="date-container">
       <span id="date"></span>
@@ -398,6 +406,13 @@
               <label for="toggle-layout">一列表示</label>
               <label class="switch">
                 <input type="checkbox" id="toggle-layout">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="custom-row">
+              <label for="toggle-seconds">秒数表示</label>
+              <label class="switch">
+                <input type="checkbox" id="toggle-seconds" checked>
                 <span class="slider"></span>
               </label>
             </div>
@@ -468,11 +483,10 @@
   <script>
     const day = function() {
       const n = dayjs(new Date());
-      const timeEl = document.getElementById("time");
-      const dateEl = document.getElementById("date");
-
-      timeEl.innerHTML = `${n.format("HH")}<span id="colon">:</span>${n.format("mm")}<span id="sec">${n.format("ss")}</span>`;
-      dateEl.innerHTML = `${n.format("MM/DD ddd")}`;
+      document.getElementById("hour").textContent = n.format("HH");
+      document.getElementById("min").textContent = n.format("mm");
+      document.getElementById("sec").textContent = n.format("ss");
+      document.getElementById("date").textContent = n.format("MM/DD ddd");
     };
     
     day();
@@ -484,11 +498,13 @@
     const colorEnd = document.getElementById("color-end");
     const nowtimeBox = document.getElementById("nowtime-box");
     const toggleLayout = document.getElementById("toggle-layout");
+    const toggleSeconds = document.getElementById("toggle-seconds");
     const toggleBg = document.getElementById("toggle-bg");
 
     const STORAGE_KEY_START = "mc_clock_grad_start";
     const STORAGE_KEY_END = "mc_clock_grad_end";
     const STORAGE_KEY_INLINE = "mc_clock_inline_layout";
+    const STORAGE_KEY_SECONDS = "mc_clock_show_seconds";
     const STORAGE_KEY_LIGHT_BG = "mc_clock_light_bg";
 
     // ページ名定義
@@ -548,6 +564,16 @@
       } catch (e) {}
     }
 
+    // 秒数表示設定の保持・適用
+    function loadSavedSeconds() {
+      try {
+        const savedSeconds = localStorage.getItem(STORAGE_KEY_SECONDS);
+        const showSeconds = savedSeconds !== null ? savedSeconds === "true" : true;
+        toggleSeconds.checked = showSeconds;
+        nowtimeBox.classList.toggle("hide-seconds", !showSeconds);
+      } catch (e) {}
+    }
+
     // 背景色設定の保持・適用
     function loadSavedBg() {
       try {
@@ -565,6 +591,14 @@
       } catch (e) {}
     });
 
+    toggleSeconds.addEventListener("change", (e) => {
+      const showSeconds = e.target.checked;
+      nowtimeBox.classList.toggle("hide-seconds", !showSeconds);
+      try {
+        localStorage.setItem(STORAGE_KEY_SECONDS, showSeconds);
+      } catch (e) {}
+    });
+
     toggleBg.addEventListener("change", (e) => {
       const isLight = e.target.checked;
       document.body.classList.toggle("light-mode", isLight);
@@ -575,6 +609,7 @@
 
     loadSavedGradient();
     loadSavedLayout();
+    loadSavedSeconds();
     loadSavedBg();
 
     toggleBtn.addEventListener("click", (e) => {
