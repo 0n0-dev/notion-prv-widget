@@ -5,27 +5,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
   <title>mc-clock 01 | mc-stock</title>
-  
+
   <!-- Day.js ライブラリ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.10.6/dayjs.min.js"></script>
-  
-  <!-- Google Fonts (Roboto) -->
+
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@700&display=swap" rel="stylesheet">
-  
+
   <style>
     :root {
-      --grad-start: #00c6ff;
-      --grad-end: #0072ff;
-      --bg-color: #191919; /* デフォルトのダークモード背景色 */
-      --text-color: #ffffff;
+      --grad-start: #ffffff;
+      --grad-mid: #ffffff;
+      --grad-end: #ffffff;
+      --bg-color: #191919;
     }
 
-    /* 白背景モード用スタイルの拡張 */
-    body.light-mode {
+    /* 白背景モード用ルート変数 */
+    body.white-bg {
       --bg-color: #ffffff;
-      --text-color: #333333;
     }
 
     * {
@@ -34,68 +33,101 @@
       box-sizing: border-box;
     }
 
-    /* 画面全体でスクロールバーを完全に消去 */
-    html, body {
-      width: 100%;
-      height: 100%;
-      overflow: hidden !important;
-    }
-
     body {
-      font-family: 'Roboto', sans-serif;
+      font-family: Roboto, sans-serif;
       text-align: center;
       background-color: var(--bg-color);
-      color: var(--text-color);
       display: flex;
       justify-content: center;
-      align-items: flex-start;
-      transition: background-color 0.2s ease, color 0.2s ease;
+      transition: background-color 0.3s ease;
     }
 
     .nowtime {
       width: fit-content;
       margin: 0 auto;
-      padding: 0 15px 7px 15px;
+      padding: 7px 15px;
       position: relative;
       display: flex;
       flex-direction: column;
-      background: transparent;
+      align-items: stretch;
     }
 
-    /* 一列表示用のCSS */
-    .nowtime.inline-layout {
-      flex-direction: row;
-      align-items: baseline;
-      gap: 12px;
-      padding-right: 25px;
-
-      /* 一列表示時は親全体にグラデーションを接続適用 */
+    /* デフォルト (2列表示時: 2色グラデーション) */
+    #date, #time {
+      letter-spacing: 2px;
       background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+    }
+
+    /* 2列表示時 (中間色有効: 3色グラデーション) */
+    .use-mid-color #date,
+    .use-mid-color #time {
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-mid), var(--grad-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* 1行表示時の全体グラデーション（分断防止） */
+    .nowtime.single-line {
+      flex-direction: row;
+      gap: 12px;
+      align-items: baseline;
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nowtime.single-line.use-mid-color {
+      background: linear-gradient(135deg, var(--grad-start), var(--grad-mid), var(--grad-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* 1行表示時は子要素の個別グラデーションを解除 */
+    .single-line #date,
+    .single-line #time {
+      background: none !important;
+      -webkit-background-clip: initial !important;
+      -webkit-text-fill-color: inherit !important;
+    }
+
+    /* --- 時間と日付で個別にシャドウの濃さを制御 --- */
+    .use-inner-shadow #time {
+      filter: url(#inset-shadow-time);
+    }
+
+    .use-inner-shadow #date {
+      filter: url(#inset-shadow-date);
+    }
+
+    .use-inner-shadow #date-container {
+      filter: url(#inset-shadow-line);
+    }
+
+    /* 1行表示時の調整 */
+    .single-line.use-inner-shadow {
+      filter: url(#inset-shadow-time);
+    }
+
+    .single-line.use-inner-shadow #time,
+    .single-line.use-inner-shadow #date,
+    .single-line.use-inner-shadow #date-container {
+      filter: none !important;
     }
 
     #time {
       font-size: 42px;
       line-height: 48px;
-      letter-spacing: 2px;
-      position: relative;
-      display: inline-block;
-      
-      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の時間 */
-    .nowtime.inline-layout #time {
-      font-size: 42px;
-      line-height: 48px;
-      background: none;
-      -webkit-background-clip: initial;
-      -webkit-text-fill-color: inherit;
+    /* 1行表示時の時間サイズ（日付と同じ24pxに揃える） */
+    .single-line #time {
+      font-size: 24px;
+      line-height: 28px;
     }
 
+    /* 秒数のスタイル */
     #sec {
       font-size: 18px;
       line-height: 18px;
@@ -104,70 +136,82 @@
       display: inline-block;
     }
 
-    /* 秒非表示スタイルの制御 */
+    /* 1行表示時の秒数サイズ調整 */
+    .single-line #sec {
+      font-size: 14px;
+      line-height: 14px;
+    }
+
+    /* 秒数非表示切り替え用クラス */
     .hide-seconds #sec {
       display: none !important;
     }
 
-    /* 一列表示時でも秒数のサイズを18pxに維持 */
-    .nowtime.inline-layout #sec {
-      font-size: 18px;
-      line-height: 18px;
-    }
-
-    /* 日付コンテナ & 区切りライン */
     #date-container {
       width: 100%;
       padding-top: 5px;
-      margin-top: 2px;
+      margin-top: 0px;
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      position: relative;
-
       border-top: 2px solid transparent;
       border-image: linear-gradient(90deg, var(--grad-start), var(--grad-end)) 1;
     }
 
-    /* 一列表示時の日付コンテナ調整（区切りライン削除） */
-    .nowtime.inline-layout #date-container {
+    .use-mid-color #date-container {
+      border-image: linear-gradient(90deg, var(--grad-start), var(--grad-mid), var(--grad-end)) 1;
+    }
+
+    /* 1行表示時の日付コンテナ調整（区切り線削除 & 高さ揃え） */
+    .single-line #date-container {
       width: auto;
       padding-top: 0;
       margin-top: 0;
-      border-top: none;
-      border-left: none;
-      border-image: none;
+      border: none !important;
+      border-image: none !important;
       padding-left: 0;
+      display: inline-flex;
+      align-items: baseline;
+      position: relative;
     }
 
     #date {
       font-size: 24px;
       line-height: 28px;
       white-space: nowrap;
-      letter-spacing: 2px;
-
-      background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
     }
 
-    /* 一列表示時の日付（文字サイズ42px） */
-    .nowtime.inline-layout #date {
-      font-size: 42px;
-      line-height: 48px;
-      background: none;
-      -webkit-background-clip: initial;
-      -webkit-text-fill-color: inherit;
+    /* コロンの点滅設定 */
+    #colon {
+      margin: 0 2px;
+      vertical-align: 8%;
+      animation: blink 1s steps(1, start) infinite;
     }
 
+    @keyframes blink {
+      0%, 49% {
+        visibility: visible;
+      }
+      50%, 100% {
+        visibility: hidden;
+      }
+    }
+
+    /* 設定ボタン */
     .color-btn-wrapper {
       position: absolute;
       right: -24px;
       display: flex;
       align-items: center;
+      top: 50%;
+      transform: translateY(-50%);
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
+    }
 
-      /* 親要素の文字透過の影響を回避 */
-      -webkit-text-fill-color: initial;
+    .single-line .color-btn-wrapper {
+      right: -20px;
     }
 
     .color-btn {
@@ -184,109 +228,98 @@
       opacity: 0.9;
     }
 
-    /* 設定ポップアップ */
+    /* 設定ポップアップUI */
     .color-picker-popover {
       display: none;
       position: absolute;
-      top: calc(100% + 8px);
+      top: calc(100% + 6px);
       left: 50%;
       transform: translateX(-50%);
+      width: 195px;
       background: #252525;
       border: 1px solid #373737;
-      border-radius: 10px;
-      padding: 6px 8px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      border-radius: 8px;
+      padding: 10px 12px 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
       z-index: 100;
-      width: 190px;
-      height: 90px;
-      flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
+      flex-direction: column;
+      -webkit-text-fill-color: initial !important;
+      filter: none !important;
+    }
 
-      -webkit-text-fill-color: initial;
+    /* 白背景モード時のポップアップ見た目調整 */
+    body.white-bg .color-picker-popover {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    body.white-bg .custom-row label {
+      color: #333333;
+    }
+
+    body.white-bg .popover-nav {
+      border-top-color: #eee;
+    }
+
+    body.white-bg .nav-arrow,
+    body.white-bg .page-title {
+      color: #666;
+    }
+
+    body.white-bg .nav-arrow:hover,
+    body.white-bg .page-title:hover {
+      color: #000;
     }
 
     .color-picker-popover.active {
       display: flex;
     }
 
-    .pages-wrapper {
-      flex: 1;
-      height: 100%;
-      display: flex;
-      align-items: center;
-    }
-
-    .page {
+    /* ページコンテナ */
+    .popover-page {
       display: none;
-      width: 100%;
-      height: 100%;
       flex-direction: column;
+      gap: 6px;
+      min-height: 108px;
       justify-content: center;
     }
 
-    .page.active {
+    .popover-page.active {
       display: flex;
-    }
-
-    /* 2行（横4列×縦2行）グリッド */
-    .preset-grid-2row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 4px;
-      width: 100%;
-    }
-
-    .preset-chip {
-      width: 100%;
-      height: 24px;
-      border-radius: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.15s ease;
-    }
-
-    .preset-chip:hover {
-      transform: scale(1.1);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-    }
-
-    /* カスタム色設定 */
-    .custom-colors-page {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 4px;
-      height: 100%;
-      width: 100%;
     }
 
     .custom-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      width: 100%;
-      padding: 0 4px;
+      gap: 8px;
+      height: 22px;
     }
 
     .custom-row label {
-      font-size: 10px;
+      font-size: 11px;
       color: #ccc;
       font-weight: bold;
+      white-space: nowrap;
     }
 
     .custom-row input[type="color"] {
       border: none;
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       cursor: pointer;
       background: none;
+      padding: 0;
     }
 
-    /* トグルスイッチスタイル */
+    /* 中間色無効時の非表示行 */
+    .mid-color-row.disabled {
+      opacity: 0.3;
+      pointer-events: none;
+    }
+
+    /* トグルスイッチスタイル (iOSスタイル) */
     .switch {
       position: relative;
       display: inline-block;
@@ -309,6 +342,10 @@
       border-radius: 16px;
     }
 
+    body.white-bg .slider {
+      background-color: #e9e9ea;
+    }
+
     .slider:before {
       position: absolute;
       content: "";
@@ -319,303 +356,401 @@
       background-color: white;
       transition: .2s;
       border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     }
 
     input:checked + .slider {
-      background-color: #0072ff;
+      background-color: #34C759;
     }
 
     input:checked + .slider:before {
       transform: translateX(12px);
     }
 
-    /* 右端に配置した縦型ナビゲーション */
-    .nav-side {
+    /* プリセットボタン グリッドレイアウト（テキスト非表示・見本化） */
+    .preset-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .preset-btn {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      height: 22px;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+
+    body.white-bg .preset-btn {
+      border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .preset-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* ページネーション用ナビゲーション */
+    .popover-nav {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: space-between;
-      height: 100%;
-      width: 32px;
-      border-left: 1px solid #333;
-      padding-left: 5px;
+      margin-top: 6px;
+      padding-top: 4px;
+      border-top: 1px solid #333;
     }
 
     .nav-arrow {
       background: none;
       border: none;
+      color: #888;
+      font-size: 10px;
       cursor: pointer;
-      font-size: 9px;
-      color: #aaa;
-      padding: 2px;
+      padding: 0 4px;
+      transition: color 0.2s;
       line-height: 1;
-      transition: color 0.15s ease;
     }
 
     .nav-arrow:hover {
       color: #fff;
     }
 
-    .nav-indicator {
-      font-size: 9px;
-      color: #aaa;
+    .page-title {
+      font-size: 10px;
       font-weight: bold;
-      writing-mode: vertical-rl;
-      text-orientation: mixed;
-      letter-spacing: 1px;
+      color: #aaa;
+      cursor: pointer;
       user-select: none;
+      transition: color 0.2s;
     }
 
-    /* コロンの点滅設定（visibilityでの切り替えに変更） */
-    #colon {
-      margin: 0 2px;
-      vertical-align: 8%;
-      animation: blink 1s steps(1, start) infinite;
-    }
-
-    @keyframes blink {
-      0%, 49% {
-        visibility: visible;
-      }
-      50%, 100% {
-        visibility: hidden;
-      }
+    .page-title:hover {
+      color: #fff;
     }
   </style>
 </head>
 <body>
 
-  <!-- 時計表示エリア -->
-  <div class="nowtime" id="nowtime-box">
+  <!-- 個別調整用のSVGフィルター群 -->
+  <svg width="0" height="0" style="position:absolute;">
+    <!-- 時間用（大きめ・濃いめ） -->
+    <filter id="inset-shadow-time" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dx="1" dy="2" />
+      <feGaussianBlur stdDeviation="2" result="offset-blur" />
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+      <feFlood flood-color="black" flood-opacity="0.7" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+
+    <!-- 日付文字用（フォントサイズに合わせて薄く・浅く設定） -->
+    <filter id="inset-shadow-date" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dx="0.8" dy="1.2" />
+      <feGaussianBlur stdDeviation="1.2" result="offset-blur" />
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+      <feFlood flood-color="black" flood-opacity="0.7" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+
+    <!-- 中央の区切り線用 -->
+    <filter id="inset-shadow-line" x="-10%" y="-10%" width="120%" height="120%">
+      <feOffset dx="0" dy="1" />
+      <feGaussianBlur stdDeviation="0.5" result="offset-blur" />
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse" />
+      <feFlood flood-color="black" flood-opacity="0.4" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+  </svg>
+
+  <div class="nowtime hide-seconds" id="nowtime-box">
     <div id="time">
       <span id="hour">00</span><span id="colon">:</span><span id="min">00</span><span id="sec">00</span>
     </div>
-    
     <div id="date-container">
       <span id="date"></span>
-      
       <div class="color-btn-wrapper">
-        <button class="color-btn" id="toggle-picker" title="設定の変更">⚙️</button>
+        <button class="color-btn" id="toggle-picker" title="設定">⚙️</button>
       </div>
     </div>
 
-    <!-- 設定ポップアップUI -->
+    <!-- 設定UI -->
     <div class="color-picker-popover" id="picker-popover">
       
-      <!-- メインコンテンツエリア -->
-      <div class="pages-wrapper">
-        <!-- ページ1: レイアウト設定 -->
-        <div class="page" id="page-1">
-          <div class="custom-colors-page">
-            <div class="custom-row">
-              <label for="toggle-layout">一列表示</label>
-              <label class="switch">
-                <input type="checkbox" id="toggle-layout">
-                <span class="slider"></span>
-              </label>
-            </div>
-            <div class="custom-row">
-              <label for="toggle-seconds">秒数表示</label>
-              <label class="switch">
-                <input type="checkbox" id="toggle-seconds" checked>
-                <span class="slider"></span>
-              </label>
-            </div>
-            <div class="custom-row">
-              <label for="toggle-bg">背景色を白にする</label>
-              <label class="switch">
-                <input type="checkbox" id="toggle-bg">
-                <span class="slider"></span>
-              </label>
-            </div>
-          </div>
+      <!-- ページ1: スイッチ関係 -->
+      <div class="popover-page active" id="page-1">
+        <div class="custom-row">
+          <label for="toggle-white-bg">背景色を白にする</label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-white-bg">
+            <span class="slider"></span>
+          </label>
         </div>
-
-        <!-- ページ2: カスタム指定 -->
-        <div class="page" id="page-2">
-          <div class="custom-colors-page">
-            <div class="custom-row">
-              <label>開始色</label>
-              <input type="color" id="color-start" value="#00c6ff">
-            </div>
-            <div class="custom-row">
-              <label>終了色</label>
-              <input type="color" id="color-end" value="#0072ff">
-            </div>
-          </div>
+        <div class="custom-row">
+          <label for="toggle-single-line">1行表示</label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-single-line">
+            <span class="slider"></span>
+          </label>
         </div>
-
-        <!-- ページ3: 季節のプリセット -->
-        <div class="page active" id="page-3">
-          <div class="preset-grid-2row">
-            <button class="preset-chip" style="background: linear-gradient(135deg, #ff9a9e, #fecfef);" data-start="#ff9a9e" data-end="#fecfef" title="🌸 桜 (春)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #a1c4fd, #c2e9fb);" data-start="#a1c4fd" data-end="#c2e9fb" title="🌱 新緑 (春)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #00c6ff, #0072ff);" data-start="#00c6ff" data-end="#0072ff" title="☀️ 快晴 (夏)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #0ba360, #3cba92);" data-start="#0ba360" data-end="#3cba92" title="🌊 深海 (夏)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #ff758c, #ff7eb3);" data-start="#ff758c" data-end="#ff7eb3" title="🍁 紅葉 (秋)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #f7971e, #ffd200);" data-start="#f7971e" data-end="#ffd200" title="🌾 豊穣 (秋)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #83a4d4, #b6fbff);" data-start="#83a4d4" data-end="#b6fbff" title="❄️ 氷雪 (冬)"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #2b5876, #4e4376);" data-start="#2b5876" data-end="#4e4376" title="🌨 霜夜 (冬)"></button>
-          </div>
+        <div class="custom-row">
+          <label for="toggle-seconds">秒数表示</label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-seconds">
+            <span class="slider"></span>
+          </label>
         </div>
-
-        <!-- ページ4: 空のプリセット -->
-        <div class="page" id="page-4">
-          <div class="preset-grid-2row">
-            <button class="preset-chip" style="background: linear-gradient(135deg, #ff512f, #f09819);" data-start="#ff512f" data-end="#f09819" title="🌅 朝焼け"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #36d1dc, #5b86e5);" data-start="#36d1dc" data-end="#5b86e5" title="🌤 昼空"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #fa709a, #fee140);" data-start="#fa709a" data-end="#fee140" title="🌇 夕焼け"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #3a1c71, #d76d77);" data-start="#3a1c71" data-end="#d76d77" title="🌆 黄昏"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #43e97b, #38f9d7);" data-start="#43e97b" data-end="#38f9d7" title="🌌 茜空"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #0f2027, #203a43);" data-start="#0f2027" data-end="#203a43" title="🌌 星空"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #12c2e9, #c471ed);" data-start="#12c2e9" data-end="#c471ed" title="🌌 極光"></button>
-            <button class="preset-chip" style="background: linear-gradient(135deg, #1f1c2c, #928dab);" data-start="#1f1c2c" data-end="#928dab" title="🌙 月夜"></button>
-          </div>
+        <div class="custom-row">
+          <label for="toggle-use-mid">中間色を使用</label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-use-mid">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="custom-row">
+          <label for="toggle-inner-shadow">内側シャドウ</label>
+          <label class="switch">
+            <input type="checkbox" id="toggle-inner-shadow">
+            <span class="slider"></span>
+          </label>
         </div>
       </div>
 
-      <!-- 右端の縦型ナビゲーション -->
-      <div class="nav-side">
-        <button class="nav-arrow" id="prev-page" title="前のページ">▲</button>
-        <span class="nav-indicator" id="page-indicator">季節</span>
-        <button class="nav-arrow" id="next-page" title="次のページ">▼</button>
+      <!-- ページ2: グラデーションカラー -->
+      <div class="popover-page" id="page-2">
+        <div class="custom-row">
+          <label>開始色</label>
+          <input type="color" id="color-start" value="#ffffff">
+        </div>
+        <div class="custom-row mid-color-row disabled" id="mid-color-wrapper">
+          <label>中間色</label>
+          <input type="color" id="color-mid" value="#ffffff">
+        </div>
+        <div class="custom-row">
+          <label>終了色</label>
+          <input type="color" id="color-end" value="#ffffff">
+        </div>
+      </div>
+
+      <!-- ページ3: 季節1 -->
+      <div class="popover-page" id="page-3">
+        <div class="preset-grid">
+          <button class="preset-btn" title="春 (桜)" style="background: linear-gradient(135deg, #ffb7c5, #ff69b4, #ff1493);" data-start="#ffb7c5" data-mid="#ff69b4" data-end="#ff1493"></button>
+          <button class="preset-btn" title="初夏 (新緑)" style="background: linear-gradient(135deg, #a8ff78, #78ffd6, #00b4db);" data-start="#a8ff78" data-mid="#78ffd6" data-end="#00b4db"></button>
+          <button class="preset-btn" title="夏 (向日葵)" style="background: linear-gradient(135deg, #ff4e50, #f9d423, #22c1c3);" data-start="#ff4e50" data-mid="#f9d423" data-end="#22c1c3"></button>
+          <button class="preset-btn" title="秋 (紅葉)" style="background: linear-gradient(135deg, #d31027, #ea384d, #f7971e);" data-start="#d31027" data-mid="#ea384d" data-end="#f7971e"></button>
+          <button class="preset-btn" title="初冬 (木枯らし)" style="background: linear-gradient(135deg, #3a1c71, #d76d77, #ffaf7b);" data-start="#3a1c71" data-mid="#d76d77" data-end="#ffaf7b"></button>
+          <button class="preset-btn" title="冬 (白銀)" style="background: linear-gradient(135deg, #e6dada, #99f2c8, #1fddff);" data-start="#e6dada" data-mid="#99f2c8" data-end="#1fddff"></button>
+          <button class="preset-btn" title="梅雨 (紫陽花)" style="background: linear-gradient(135deg, #8a2be2, #da70d6, #4169e1);" data-start="#8a2be2" data-mid="#da70d6" data-end="#4169e1"></button>
+          <button class="preset-btn" title="ハロウィン" style="background: linear-gradient(135deg, #ff758c, #ff7eb3, #764ba2);" data-start="#ff758c" data-mid="#ff7eb3" data-end="#764ba2"></button>
+        </div>
+      </div>
+
+      <!-- ページ4: 季節2 -->
+      <div class="popover-page" id="page-4">
+        <div class="preset-grid">
+          <button class="preset-btn" title="新春 (初日出)" style="background: linear-gradient(135deg, #f12711, #f5af19, #fffc00);" data-start="#f12711" data-mid="#f5af19" data-end="#fffc00"></button>
+          <button class="preset-btn" title="春告鳥 (ウグイス)" style="background: linear-gradient(135deg, #83a4d4, #b6fbff, #9be15d);" data-start="#83a4d4" data-mid="#b6fbff" data-end="#9be15d"></button>
+          <button class="preset-btn" title="新緑 (木漏れ日)" style="background: linear-gradient(135deg, #11998e, #38ef7d, #a8ff78);" data-start="#11998e" data-mid="#38ef7d" data-end="#a8ff78"></button>
+          <button class="preset-btn" title="盛夏 (青空と海)" style="background: linear-gradient(135deg, #2193b0, #6dd5ed, #ffb347);" data-start="#2193b0" data-mid="#6dd5ed" data-end="#ffb347"></button>
+          <button class="preset-btn" title="晩秋 (夕暮れ)" style="background: linear-gradient(135deg, #e65c00, #F9D423, #800080);" data-start="#e65c00" data-mid="#F9D423" data-end="#800080"></button>
+          <button class="preset-btn" title="初雪 (粉雪)" style="background: linear-gradient(135deg, #83a4d4, #b6fbff, #ffffff);" data-start="#83a4d4" data-mid="#b6fbff" data-end="#ffffff"></button>
+          <button class="preset-btn" title="寒梅 (紅梅)" style="background: linear-gradient(135deg, #cc2b5e, #753a88, #ffb7c5);" data-start="#cc2b5e" data-mid="#753a88" data-end="#ffb7c5"></button>
+          <button class="preset-btn" title="ナイトパレード" style="background: linear-gradient(135deg, #200122, #6f0000, #ff416c);" data-start="#200122" data-mid="#6f0000" data-end="#ff416c"></button>
+        </div>
+      </div>
+
+      <!-- ページ5: 空1 -->
+      <div class="popover-page" id="page-5">
+        <div class="preset-grid">
+          <button class="preset-btn" title="朝焼け (Dawn)" style="background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd);" data-start="#ff9a9e" data-mid="#fecfef" data-end="#a1c4fd"></button>
+          <button class="preset-btn" title="青空 (Blue Sky)" style="background: linear-gradient(135deg, #89f7fe, #66a6ff, #005bea);" data-start="#89f7fe" data-mid="#66a6ff" data-end="#005bea"></button>
+          <button class="preset-btn" title="夕焼け (Sunset)" style="background: linear-gradient(135deg, #fa709a, #fee140, #ff5858);" data-start="#fa709a" data-mid="#fee140" data-end="#ff5858"></button>
+          <button class="preset-btn" title="黄昏 (Twilight)" style="background: linear-gradient(135deg, #4facfe, #00f2fe, #00008b);" data-start="#4facfe" data-mid="#00f2fe" data-end="#00008b"></button>
+          <button class="preset-btn" title="マジックアワー" style="background: linear-gradient(135deg, #f857a6, #ff5858, #4fa3e3);" data-start="#f857a6" data-mid="#ff5858" data-end="#4fa3e3"></button>
+          <button class="preset-btn" title="夜空 (Night Sky)" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);" data-start="#0f2027" data-mid="#203a43" data-end="#2c5364"></button>
+          <button class="preset-btn" title="オーロラ (Aurora)" style="background: linear-gradient(135deg, #00c6ff, #0072ff, #a8ff78);" data-start="#00c6ff" data-mid="#0072ff" data-end="#a8ff78"></button>
+          <button class="preset-btn" title="朝もや (Mist)" style="background: linear-gradient(135deg, #e0c3fc, #8ec5fc, #e0eafc);" data-start="#e0c3fc" data-mid="#8ec5fc" data-end="#e0eafc"></button>
+        </div>
+      </div>
+
+      <!-- ページ6: 空2 -->
+      <div class="popover-page" id="page-6">
+        <div class="preset-grid">
+          <button class="preset-btn" title="薄明 (Twilight)" style="background: linear-gradient(135deg, #24243e, #302b63, #0f0c20);" data-start="#24243e" data-mid="#302b63" data-end="#0f0c20"></button>
+          <button class="preset-btn" title="茜空 (Sunset Red)" style="background: linear-gradient(135deg, #ff4b1f, #ff9068, #fd79a8);" data-start="#ff4b1f" data-mid="#ff9068" data-end="#fd79a8"></button>
+          <button class="preset-btn" title="天の川 (Milky Way)" style="background: linear-gradient(135deg, #020111, #20202c, #4a00e0);" data-start="#020111" data-mid="#20202c" data-end="#4a00e0"></button>
+          <button class="preset-btn" title="サンセットコパ" style="background: linear-gradient(135deg, #e1eec3, #f05053, #e1eec3);" data-start="#f05053" data-mid="#e1eec3" data-end="#f05053"></button>
+          <button class="preset-btn" title="嵐の空 (Storm)" style="background: linear-gradient(135deg, #373B44, #4286f4, #191919);" data-start="#373B44" data-mid="#4286f4" data-end="#191919"></button>
+          <button class="preset-btn" title="積乱雲 (Thunder)" style="background: linear-gradient(135deg, #1f1c2c, #928DAB, #ffffff);" data-start="#1f1c2c" data-mid="#928DAB" data-end="#ffffff"></button>
+          <button class="preset-btn" title="宙 (Deep Space)" style="background: linear-gradient(135deg, #000000, #130cb7, #52e5e7);" data-start="#000000" data-mid="#130cb7" data-end="#52e5e7"></button>
+          <button class="preset-btn" title="朝露 (Dew)" style="background: linear-gradient(135deg, #c9d6ff, #e2e2e2, #a1c4fd);" data-start="#c9d6ff" data-mid="#e2e2e2" data-end="#a1c4fd"></button>
+        </div>
+      </div>
+
+      <!-- ページネーションナビ -->
+      <div class="popover-nav">
+        <button class="nav-arrow" id="prev-page">◀</button>
+        <span class="page-title" id="page-title">オプション</span>
+        <button class="nav-arrow" id="next-page">▶</button>
       </div>
 
     </div>
   </div>
 
-  <!-- 時計の動作スクリプト -->
   <script>
+    const elHour = document.getElementById("hour");
+    const elMin = document.getElementById("min");
+    const elSec = document.getElementById("sec");
+    const elDate = document.getElementById("date");
+
     const day = function() {
       const n = dayjs(new Date());
-      document.getElementById("hour").textContent = n.format("HH");
-      document.getElementById("min").textContent = n.format("mm");
-      document.getElementById("sec").textContent = n.format("ss");
-      document.getElementById("date").textContent = n.format("MM/DD ddd");
+      elHour.textContent = n.format("HH");
+      elMin.textContent = n.format("mm");
+      elSec.textContent = n.format("ss");
+      elDate.textContent = n.format("MM/DD ddd");
     };
-    
     day();
     setInterval(day, 1000);
 
+    // 設定UI制御とLocalStorage保存
     const toggleBtn = document.getElementById("toggle-picker");
     const popover = document.getElementById("picker-popover");
     const colorStart = document.getElementById("color-start");
+    const colorMid = document.getElementById("color-mid");
     const colorEnd = document.getElementById("color-end");
-    const nowtimeBox = document.getElementById("nowtime-box");
-    const toggleLayout = document.getElementById("toggle-layout");
+    const toggleWhiteBg = document.getElementById("toggle-white-bg");
     const toggleSeconds = document.getElementById("toggle-seconds");
-    const toggleBg = document.getElementById("toggle-bg");
+    const toggleUseMid = document.getElementById("toggle-use-mid");
+    const toggleSingleLine = document.getElementById("toggle-single-line");
+    const toggleInnerShadow = document.getElementById("toggle-inner-shadow");
+    const midColorWrapper = document.getElementById("mid-color-wrapper");
+    const nowtimeBox = document.getElementById("nowtime-box");
 
-    const STORAGE_KEY_START = "mc_clock_grad_start";
-    const STORAGE_KEY_END = "mc_clock_grad_end";
-    const STORAGE_KEY_INLINE = "mc_clock_inline_layout";
-    const STORAGE_KEY_SECONDS = "mc_clock_show_seconds";
-    const STORAGE_KEY_LIGHT_BG = "mc_clock_light_bg";
+    // ページ切替制御（全6ページ）
+    let currentPage = 1;
+    const totalPages = 6;
+    const pageTitles = ["オプション", "カスタム", "季節", "季節2", "空", "空2"];
+    const pages = [
+      document.getElementById("page-1"),
+      document.getElementById("page-2"),
+      document.getElementById("page-3"),
+      document.getElementById("page-4"),
+      document.getElementById("page-5"),
+      document.getElementById("page-6")
+    ];
+    const pageTitle = document.getElementById("page-title");
 
-    // ページ名定義
-    const pageNames = ["表示", "カスタム", "季節", "空"];
-    let currentPage = 3;
-    const totalPages = 4;
-
-    function updatePage(pageIndex) {
-      currentPage = pageIndex;
-      document.querySelectorAll(".page").forEach((p, idx) => {
-        p.classList.toggle("active", idx + 1 === currentPage);
+    function switchPage(page) {
+      currentPage = page;
+      pages.forEach((p, index) => {
+        p.classList.toggle("active", index + 1 === currentPage);
       });
-      document.getElementById("page-indicator").textContent = pageNames[currentPage - 1];
+      pageTitle.textContent = pageTitles[currentPage - 1];
     }
 
-    // 上三角ボタン（前のページへ）
     document.getElementById("prev-page").addEventListener("click", () => {
-      const newPage = currentPage > 1 ? currentPage - 1 : totalPages;
-      updatePage(newPage);
+      const target = currentPage === 1 ? totalPages : currentPage - 1;
+      switchPage(target);
     });
 
-    // 下三角ボタン（次のページへ）
     document.getElementById("next-page").addEventListener("click", () => {
-      const newPage = currentPage < totalPages ? currentPage + 1 : 1;
-      updatePage(newPage);
+      const target = currentPage === totalPages ? 1 : currentPage + 1;
+      switchPage(target);
     });
 
-    function setGradient(start, end) {
+    pageTitle.addEventListener("click", () => {
+      const target = currentPage === totalPages ? 1 : currentPage + 1;
+      switchPage(target);
+    });
+
+    function setGradient(start, mid, end) {
       document.documentElement.style.setProperty("--grad-start", start);
+      document.documentElement.style.setProperty("--grad-mid", mid);
       document.documentElement.style.setProperty("--grad-end", end);
-      colorStart.value = start;
-      colorEnd.value = end;
-
-      try {
-        localStorage.setItem(STORAGE_KEY_START, start);
-        localStorage.setItem(STORAGE_KEY_END, end);
-      } catch (e) {}
     }
 
-    function loadSavedGradient() {
-      try {
-        const savedStart = localStorage.getItem(STORAGE_KEY_START);
-        const savedEnd = localStorage.getItem(STORAGE_KEY_END);
+    function saveSettings() {
+      const settings = {
+        whiteBg: toggleWhiteBg.checked,
+        showSeconds: toggleSeconds.checked,
+        useMidColor: toggleUseMid.checked,
+        singleLine: toggleSingleLine.checked,
+        innerShadow: toggleInnerShadow.checked,
+        startColor: colorStart.value,
+        midColor: colorMid.value,
+        endColor: colorEnd.value
+      };
+      localStorage.setItem("clock_settings", JSON.stringify(settings));
+    }
 
-        if (savedStart && savedEnd) {
-          setGradient(savedStart, savedEnd);
+    function applyMidColorState(useMid) {
+      nowtimeBox.classList.toggle("use-mid-color", useMid);
+      midColorWrapper.classList.toggle("disabled", !useMid);
+    }
+
+    function applyWhiteBgState(isWhite) {
+      document.body.classList.toggle("white-bg", isWhite);
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem("clock_settings");
+      if (saved) {
+        try {
+          const settings = JSON.parse(saved);
+
+          if (settings.whiteBg !== undefined) {
+            toggleWhiteBg.checked = settings.whiteBg;
+            applyWhiteBgState(settings.whiteBg);
+          }
+          if (settings.showSeconds !== undefined) {
+            toggleSeconds.checked = settings.showSeconds;
+            nowtimeBox.classList.toggle("hide-seconds", !settings.showSeconds);
+          }
+          if (settings.useMidColor !== undefined) {
+            toggleUseMid.checked = settings.useMidColor;
+            applyMidColorState(settings.useMidColor);
+          }
+          if (settings.singleLine !== undefined) {
+            toggleSingleLine.checked = settings.singleLine;
+            nowtimeBox.classList.toggle("single-line", settings.singleLine);
+          }
+          if (settings.innerShadow !== undefined) {
+            toggleInnerShadow.checked = settings.innerShadow;
+            nowtimeBox.classList.toggle("use-inner-shadow", settings.innerShadow);
+          }
+
+          const defaultColor = settings.whiteBg ? "#000000" : "#ffffff";
+          colorStart.value = settings.startColor || defaultColor;
+          colorMid.value = settings.midColor || defaultColor;
+          colorEnd.value = settings.endColor || defaultColor;
+
+          setGradient(colorStart.value, colorMid.value, colorEnd.value);
+        } catch (e) {
+          console.error("Failed to load settings:", e);
         }
-      } catch (e) {}
+      } else {
+        toggleWhiteBg.checked = false;
+        toggleSeconds.checked = false;
+        toggleUseMid.checked = false;
+        toggleSingleLine.checked = false;
+        toggleInnerShadow.checked = false;
+        applyWhiteBgState(false);
+        applyMidColorState(false);
+        nowtimeBox.classList.add("hide-seconds");
+        nowtimeBox.classList.remove("single-line");
+        nowtimeBox.classList.remove("use-inner-shadow");
+        colorStart.value = "#ffffff";
+        colorMid.value = "#ffffff";
+        colorEnd.value = "#ffffff";
+        setGradient("#ffffff", "#ffffff", "#ffffff");
+      }
     }
 
-    // レイアウト設定の保持・適用
-    function loadSavedLayout() {
-      try {
-        const isInline = localStorage.getItem(STORAGE_KEY_INLINE) === "true";
-        toggleLayout.checked = isInline;
-        nowtimeBox.classList.toggle("inline-layout", isInline);
-      } catch (e) {}
-    }
-
-    // 秒数表示設定の保持・適用
-    function loadSavedSeconds() {
-      try {
-        const savedSeconds = localStorage.getItem(STORAGE_KEY_SECONDS);
-        const showSeconds = savedSeconds !== null ? savedSeconds === "true" : true;
-        toggleSeconds.checked = showSeconds;
-        nowtimeBox.classList.toggle("hide-seconds", !showSeconds);
-      } catch (e) {}
-    }
-
-    // 背景色設定の保持・適用
-    function loadSavedBg() {
-      try {
-        const isLight = localStorage.getItem(STORAGE_KEY_LIGHT_BG) === "true";
-        toggleBg.checked = isLight;
-        document.body.classList.toggle("light-mode", isLight);
-      } catch (e) {}
-    }
-
-    toggleLayout.addEventListener("change", (e) => {
-      const isInline = e.target.checked;
-      nowtimeBox.classList.toggle("inline-layout", isInline);
-      try {
-        localStorage.setItem(STORAGE_KEY_INLINE, isInline);
-      } catch (e) {}
-    });
-
-    toggleSeconds.addEventListener("change", (e) => {
-      const showSeconds = e.target.checked;
-      nowtimeBox.classList.toggle("hide-seconds", !showSeconds);
-      try {
-        localStorage.setItem(STORAGE_KEY_SECONDS, showSeconds);
-      } catch (e) {}
-    });
-
-    toggleBg.addEventListener("change", (e) => {
-      const isLight = e.target.checked;
-      document.body.classList.toggle("light-mode", isLight);
-      try {
-        localStorage.setItem(STORAGE_KEY_LIGHT_BG, isLight);
-      } catch (e) {}
-    });
-
-    loadSavedGradient();
-    loadSavedLayout();
-    loadSavedSeconds();
-    loadSavedBg();
+    // 初期読み込み
+    loadSettings();
 
     toggleBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -630,21 +765,73 @@
       e.stopPropagation();
     });
 
-    document.querySelectorAll(".preset-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        const start = chip.getAttribute("data-start");
-        const end = chip.getAttribute("data-end");
-        setGradient(start, end);
-        popover.classList.remove("active");
+    const handleColorChange = () => {
+      setGradient(colorStart.value, colorMid.value, colorEnd.value);
+      saveSettings();
+    };
+
+    colorStart.addEventListener("input", handleColorChange);
+    colorMid.addEventListener("input", handleColorChange);
+    colorEnd.addEventListener("input", handleColorChange);
+
+    toggleWhiteBg.addEventListener("change", (e) => {
+      const isWhite = e.target.checked;
+      applyWhiteBgState(isWhite);
+
+      if (isWhite && colorStart.value === "#ffffff") {
+        colorStart.value = "#000000";
+        colorMid.value = "#222222";
+        colorEnd.value = "#444444";
+        setGradient("#000000", "#222222", "#444444");
+      } else if (!isWhite && colorStart.value === "#000000") {
+        colorStart.value = "#ffffff";
+        colorMid.value = "#ffffff";
+        colorEnd.value = "#ffffff";
+        setGradient("#ffffff", "#ffffff", "#ffffff");
+      }
+
+      saveSettings();
+    });
+
+    toggleSeconds.addEventListener("change", (e) => {
+      nowtimeBox.classList.toggle("hide-seconds", !e.target.checked);
+      saveSettings();
+    });
+
+    toggleUseMid.addEventListener("change", (e) => {
+      const useMid = e.target.checked;
+      applyMidColorState(useMid);
+      saveSettings();
+    });
+
+    toggleSingleLine.addEventListener("change", (e) => {
+      nowtimeBox.classList.toggle("single-line", e.target.checked);
+      saveSettings();
+    });
+
+    toggleInnerShadow.addEventListener("change", (e) => {
+      nowtimeBox.classList.toggle("use-inner-shadow", e.target.checked);
+      saveSettings();
+    });
+
+    // プリセットクリック時の動作（カラー反映 & 中間色ON）
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const start = btn.getAttribute("data-start");
+        const mid = btn.getAttribute("data-mid");
+        const end = btn.getAttribute("data-end");
+
+        colorStart.value = start;
+        colorMid.value = mid;
+        colorEnd.value = end;
+
+        // 中間色オプションを自動的にONにする
+        toggleUseMid.checked = true;
+        applyMidColorState(true);
+
+        setGradient(start, mid, end);
+        saveSettings();
       });
-    });
-
-    colorStart.addEventListener("input", (e) => {
-      setGradient(e.target.value, colorEnd.value);
-    });
-
-    colorEnd.addEventListener("input", (e) => {
-      setGradient(colorStart.value, e.target.value);
     });
   </script>
 
