@@ -44,7 +44,7 @@
 
     .nowtime {
       width: fit-content;
-      margin: -5px auto 0 auto; /* 上側のマージンをマイナスにして上に引き上げる */
+      margin: -5px auto 0 auto; /* 上側のマージン */
       padding: 7px 15px;
       position: relative;
       display: flex;
@@ -73,6 +73,7 @@
       flex-direction: row;
       gap: 12px;
       align-items: baseline;
+      margin-top: 10px; /* ★2列表示の配置位置に統一 */
       background: linear-gradient(135deg, var(--grad-start), var(--grad-end));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -121,7 +122,7 @@
       line-height: 48px;
     }
 
-    /* 1行表示時の時間サイズ（2行表示の時間サイズ 42px に揃える） */
+    /* 1行表示時の時間サイズ */
     .single-line #time {
       font-size: 42px;
       line-height: 48px;
@@ -136,7 +137,6 @@
       display: inline-block;
     }
 
-    /* 1行表示時の秒数サイズ調整（そのまま維持） */
     .single-line #sec {
       font-size: 18px;
       line-height: 18px;
@@ -163,7 +163,7 @@
       border-image: linear-gradient(90deg, var(--grad-start), var(--grad-mid), var(--grad-end)) 1;
     }
 
-    /* 1行表示時の日付コンテナ調整（区切り線削除 & 高さ揃え） */
+    /* 1行表示時の日付コンテナ調整 */
     .single-line #date-container {
       width: auto;
       padding-top: 0;
@@ -182,7 +182,7 @@
       white-space: nowrap;
     }
 
-    /* 1行表示時の日付サイズを時間と同じ 42px に変更 */
+    /* 1行表示時の日付サイズ */
     .single-line #date {
       font-size: 42px;
       line-height: 48px;
@@ -234,7 +234,6 @@
       opacity: 0.9;
     }
 
-    /* Google Icon SVG Style */
     .gear-icon {
       width: 16px;
       height: 16px;
@@ -264,7 +263,6 @@
       filter: none !important;
     }
 
-    /* 白背景モード時のポップアップ見た目調整 */
     body.white-bg .color-picker-popover {
       background: #ffffff;
       border: 1px solid #e0e0e0;
@@ -293,7 +291,6 @@
       display: flex;
     }
 
-    /* ページコンテナ */
     .popover-page {
       display: none;
       flex-direction: column;
@@ -330,13 +327,11 @@
       padding: 0;
     }
 
-    /* 中間色無効時の非表示行 */
     .mid-color-row.disabled {
       opacity: 0.3;
       pointer-events: none;
     }
 
-    /* トグルスイッチスタイル (iOSスタイル) */
     .switch {
       position: relative;
       display: inline-block;
@@ -384,7 +379,6 @@
       transform: translateX(12px);
     }
 
-    /* プリセットボタン グリッドレイアウト（テキスト非表示・見本化） */
     .preset-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -407,7 +401,6 @@
       transform: scale(1.05);
     }
 
-    /* ページネーション用ナビゲーション */
     .popover-nav {
       display: flex;
       align-items: center;
@@ -448,9 +441,7 @@
 </head>
 <body>
 
-  <!-- 個別調整用のSVGフィルター群 -->
   <svg width="0" height="0" style="position:absolute;">
-    <!-- 時間用（大きめ・濃いめ） -->
     <filter id="inset-shadow-time" x="-10%" y="-10%" width="120%" height="120%">
       <feOffset dx="1" dy="2" />
       <feGaussianBlur stdDeviation="2" result="offset-blur" />
@@ -460,7 +451,6 @@
       <feComposite operator="over" in="shadow" in2="SourceGraphic" />
     </filter>
 
-    <!-- 日付文字用（フォントサイズに合わせて薄く・浅く設定） -->
     <filter id="inset-shadow-date" x="-10%" y="-10%" width="120%" height="120%">
       <feOffset dx="0.8" dy="1.2" />
       <feGaussianBlur stdDeviation="1.2" result="offset-blur" />
@@ -470,7 +460,6 @@
       <feComposite operator="over" in="shadow" in2="SourceGraphic" />
     </filter>
 
-    <!-- 中央の区切り線用 -->
     <filter id="inset-shadow-line" x="-10%" y="-10%" width="120%" height="120%">
       <feOffset dx="0" dy="1" />
       <feGaussianBlur stdDeviation="0.5" result="offset-blur" />
@@ -489,7 +478,6 @@
       <span id="date"></span>
       <div class="color-btn-wrapper">
         <button class="color-btn" id="toggle-picker" title="設定">
-          <!-- Google Material Symbols: settings -->
           <svg class="gear-icon" viewBox="0 0 24 24">
             <path d="M19.43 12.98c.04-.32.07-.64.07-.98 0-.34-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98 0 .33.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
           </svg>
@@ -500,7 +488,7 @@
     <!-- 設定UI -->
     <div class="color-picker-popover" id="picker-popover">
       
-      <!-- ページ1: スイッチ関係 -->
+      <!-- ページ1 -->
       <div class="popover-page active" id="page-1">
         <div class="custom-row">
           <label for="toggle-white-bg">背景色を白にする</label>
@@ -539,7 +527,7 @@
         </div>
       </div>
 
-      <!-- ページ2: グラデーションカラー -->
+      <!-- ページ2 -->
       <div class="popover-page" id="page-2">
         <div class="custom-row">
           <label>開始色</label>
@@ -555,7 +543,7 @@
         </div>
       </div>
 
-      <!-- ページ3: 季節1 -->
+      <!-- ページ3 -->
       <div class="popover-page" id="page-3">
         <div class="preset-grid">
           <button class="preset-btn" title="春 (桜)" style="background: linear-gradient(135deg, #ffb7c5, #ff69b4, #ff1493);" data-start="#ffb7c5" data-mid="#ff69b4" data-end="#ff1493"></button>
@@ -569,7 +557,7 @@
         </div>
       </div>
 
-      <!-- ページ4: 季節2 -->
+      <!-- ページ4 -->
       <div class="popover-page" id="page-4">
         <div class="preset-grid">
           <button class="preset-btn" title="新春 (初日出)" style="background: linear-gradient(135deg, #f12711, #f5af19, #fffc00);" data-start="#f12711" data-mid="#f5af19" data-end="#fffc00"></button>
@@ -583,7 +571,7 @@
         </div>
       </div>
 
-      <!-- ページ5: 空1 -->
+      <!-- ページ5 -->
       <div class="popover-page" id="page-5">
         <div class="preset-grid">
           <button class="preset-btn" title="朝焼け (Dawn)" style="background: linear-gradient(135deg, #ff9a9e, #fecfef, #a1c4fd);" data-start="#ff9a9e" data-mid="#fecfef" data-end="#a1c4fd"></button>
@@ -597,7 +585,7 @@
         </div>
       </div>
 
-      <!-- ページ6: 空2 -->
+      <!-- ページ6 -->
       <div class="popover-page" id="page-6">
         <div class="preset-grid">
           <button class="preset-btn" title="薄明 (Twilight)" style="background: linear-gradient(135deg, #24243e, #302b63, #0f0c20);" data-start="#24243e" data-mid="#302b63" data-end="#0f0c20"></button>
@@ -637,7 +625,6 @@
     day();
     setInterval(day, 1000);
 
-    // 設定UI制御とLocalStorage保存
     const toggleBtn = document.getElementById("toggle-picker");
     const popover = document.getElementById("picker-popover");
     const colorStart = document.getElementById("color-start");
@@ -651,7 +638,6 @@
     const midColorWrapper = document.getElementById("mid-color-wrapper");
     const nowtimeBox = document.getElementById("nowtime-box");
 
-    // ページ切替制御（全6ページ）
     let currentPage = 1;
     const totalPages = 6;
     const pageTitles = ["オプション", "カスタム", "季節", "季節2", "空", "空2"];
@@ -771,7 +757,6 @@
       }
     }
 
-    // 初期読み込み
     loadSettings();
 
     toggleBtn.addEventListener("click", (e) => {
@@ -836,7 +821,6 @@
       saveSettings();
     });
 
-    // プリセットクリック時の動作（カラー反映 & 中間色ON）
     document.querySelectorAll(".preset-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         const start = btn.getAttribute("data-start");
@@ -847,7 +831,6 @@
         colorMid.value = mid;
         colorEnd.value = end;
 
-        // 中間色オプションを自動的にONにする
         toggleUseMid.checked = true;
         applyMidColorState(true);
 
