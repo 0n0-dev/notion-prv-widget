@@ -176,13 +176,22 @@
       color: rgba(155, 154, 151, 0.4);
     }
 
-    /* 右下の丸いリセットボタン */
-    .reset-btn {
+    /* 右下の丸いリセットボタンのラッパー */
+    .reset-btn-container {
       position: fixed;
       bottom: 24px;
       right: 24px;
       width: 40px;
       height: 40px;
+      z-index: 1000;
+    }
+
+    /* ベースとなるリセットボタン */
+    .reset-btn {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background-color: #2f2f2f;
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -192,8 +201,7 @@
       justify-content: center;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      transition: background-color 0.2s, color 0.2s, transform 0.2s;
-      z-index: 1000;
+      transition: background-color 0.2s, color 0.2s, transform 0.2s, opacity 0.2s;
     }
 
     .reset-btn:hover {
@@ -202,8 +210,42 @@
       transform: scale(1.05);
     }
 
-    /* アイコンサイズを小さめに調整 */
-    .reset-btn .material-icons {
+    /* 誤押し防止用：確認用の赤いボタン（初期状態は非表示） */
+    .reset-confirm-btn {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background-color: #eb5757; /* Notion風の赤色 */
+      border: none;
+      color: #ffffff; /* 白アイコン */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(235, 87, 87, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.8);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    /* アクティブ状態（重ねて表示） */
+    .reset-confirm-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+    }
+
+    .reset-confirm-btn:hover {
+      background-color: #d94848;
+      transform: scale(1.08);
+    }
+
+    /* アイコンサイズ */
+    .reset-btn .material-icons,
+    .reset-confirm-btn .material-icons {
       font-size: 18px;
     }
 
@@ -236,10 +278,15 @@
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
 
-  <!-- 右下の丸いリセットボタン -->
-  <button class="reset-btn" id="resetBtn" title="すべての内容をリセット">
-    <span class="material-icons">restart_alt</span>
-  </button>
+  <!-- 右下の丸いリセットボタン（2段階確認用コンテナ） -->
+  <div class="reset-btn-container">
+    <button class="reset-btn" id="resetBtn" title="すべての内容をリセット">
+      <span class="material-icons">restart_alt</span>
+    </button>
+    <button class="reset-confirm-btn" id="resetConfirmBtn" title="もう一度押して確定">
+      <span class="material-icons">restart_alt</span>
+    </button>
+  </div>
 
   <script>
     const days = [
@@ -267,6 +314,7 @@
     const todayTodoListEl = document.getElementById('todayTodoListEl');
     const todayHeaderEl = document.getElementById('todayHeaderEl');
     const resetBtn = document.getElementById('resetBtn');
+    const resetConfirmBtn = document.getElementById('resetConfirmBtn');
 
     function saveData() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
@@ -462,8 +510,25 @@
       return label;
     }
 
-    // ダイアログなしですぐにリセット
+    // 2段階リセットボタンの動作処理
+    let confirmTimeout = null;
+
+    // 1段階目：グレーボタンを押した時
     resetBtn.onclick = () => {
+      resetConfirmBtn.classList.add('active');
+      
+      // 3秒間何も押されなければ自動的に元の状態に戻す
+      clearTimeout(confirmTimeout);
+      confirmTimeout = setTimeout(() => {
+        resetConfirmBtn.classList.remove('active');
+      }, 3000);
+    };
+
+    // 2段階目：重ねて表示された赤いボタンを押した時（実行）
+    resetConfirmBtn.onclick = () => {
+      resetConfirmBtn.classList.remove('active');
+      clearTimeout(confirmTimeout);
+      
       savedData = {};
       localStorage.removeItem(STORAGE_KEY);
       renderWidget();
