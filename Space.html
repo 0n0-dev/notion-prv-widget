@@ -1,0 +1,727 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Infinite Note Board</title>
+<!-- Google Fonts (Kiwi Maru & Zen Maru Gothic) の読み込み -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400;500&family=Zen+Maru+Gothic:wght@300;400;500;700&display=swap" rel="stylesheet">
+<!-- Google Material Symbols の読み込み -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+:root {
+  --font-system: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-kiwi: 'Kiwi Maru', serif;
+  --font-zen-maru: 'Zen Maru Gothic', sans-serif;
+  --current-font: var(--font-system);
+}
+
+*{box-sizing:border-box}
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#07080c;
+  color:#e8eaf0;
+  font-family: var(--current-font);
+}
+body{background:radial-gradient(circle at 50% 35%,#0a0c11 0,#030407 48%,#000 100%)}
+#app{position:relative;width:100%;height:100%;overflow:hidden;isolation:isolate;cursor:grab}
+#app.dragging{cursor:grabbing}
+#dust{position:absolute;inset:0;pointer-events:none;opacity:.55}
+#world{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0}
+#board{position:absolute;width:10000px;height:10000px;left:-5000px;top:-5000px;
+background-image:radial-gradient(circle,rgba(255,255,255,.025) .7px,transparent .7px);background-size:46px 46px}
+
+/* 一文字・アイコンごとに揺れるアニメーション */
+@keyframes floatChar {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(1.5deg); }
+}
+
+/* メモの配置・スタイル設定 */
+.note{
+  position:absolute;
+  padding:8px 12px;
+  border:0;
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  cursor:move;
+  user-select:none;
+  transition:opacity .15s;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.note:hover{opacity:1}
+
+.note .title{
+  font-size:14px;
+  font-weight:400;
+  letter-spacing:.01em;
+  white-space:nowrap;
+  overflow:visible;
+  text-shadow:0 1px 12px rgba(255,255,255,.12);
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:2px 4px;
+  font-family: var(--current-font);
+}
+
+/* サイトアイコン（Favicon）にゆらゆらアニメーションを追加 */
+.note .title .site-favicon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  border-radius: 2px;
+  animation: floatChar 3.5s ease-in-out infinite;
+}
+
+/* 一文字ずつのスタイル設定 */
+.note .title span{
+  display:inline-block;
+  animation: floatChar 3.5s ease-in-out infinite;
+  white-space: pre;
+}
+
+/* リンク用スタイル */
+.note .title a.note-link {
+  color: #60a5fa;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.note .title a.note-link:hover {
+  color: #93c5fd;
+}
+
+.note .dot{display:none}
+
+/* ホバー時にテキスト上に表示される本文/動画ポップアップ（ツールチップ） */
+.note .body-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px);
+  background: rgba(9, 11, 16, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #c9cedc;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+  min-width: 160px;
+  max-width: 800px; /* プレイヤー拡大に伴いツールチップ最大幅も変更 */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  pointer-events: auto;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  z-index: 20;
+}
+
+/* YouTubeプレイヤーコンテナ（2倍サイズに変更） */
+.note .body-tooltip .yt-iframe-container {
+  width: 720px;       /* 360px -> 720px (2倍) */
+  height: 405px;      /* 202.5px -> 405px (2倍, 16:9比率) */
+  margin-bottom: 6px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+}
+
+.note .body-tooltip .yt-iframe-container iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* 下向きの小さな矢印 */
+.note .body-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.2) transparent transparent transparent;
+}
+
+/* ホバー時にポップアップを表示 */
+.note:hover .body-tooltip.has-content {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+/* オンボード直接入力コンテナ */
+#inline-container{
+  position:absolute;
+  z-index:30;
+  display:none;
+  transform:translate(-50%, -130%);
+  margin-top:-8px;
+  flex-direction:column;
+  gap:6px;
+  align-items:stretch;
+}
+
+/* 本文入力エリア */
+#inline-body{
+  background:rgba(9, 11, 16, 0.85);
+  border:1px solid rgba(255, 255, 255, 0.2);
+  border-radius:6px;
+  padding:6px 10px;
+  color:#eef0f7;
+  font-family: var(--current-font);
+  font-size:13px;
+  outline:none;
+  min-width:180px;
+  max-width:80vw;
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+  backdrop-filter:blur(6px);
+  resize:none;
+  min-height:48px;
+  max-height:160px;
+  line-height:1.4;
+  overflow-x:hidden;
+}
+
+/* 従来のタイトル入力ボックスデザイン */
+#inline-input{
+  background:rgba(9, 11, 16, 0.85);
+  border:1px solid rgba(255, 255, 255, 0.2);
+  border-radius:6px;
+  padding:6px 10px;
+  color:#eef0f7;
+  font-family: var(--current-font);
+  font-size:14px;
+  outline:none;
+  text-align:left;
+  min-width:180px;
+  max-width:80vw;
+  box-shadow:0 8px 20px rgba(0,0,0,0.4);
+  backdrop-filter:blur(6px);
+}
+
+/* 画面UI */
+#coords{position:absolute;right:18px;bottom:16px;font:11px ui-monospace,SFMono-Regular,Consolas,monospace;color:rgba(255,255,255,.4);pointer-events:none;user-select:none}
+#home{position:absolute;right:18px;bottom:38px;border:none;background:transparent;padding:0;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:color .15s}
+#home:hover{color:rgba(255,255,255,.85)}
+#hint{position:absolute;left:56px;bottom:16px;font-size:11px;color:rgba(255,255,255,.35);pointer-events:none;user-select:none}
+.badge{color:rgba(255,255,255,.6)}
+
+/* 左下設定ボタン */
+#settings-toggle{
+  position:absolute;
+  left:18px;
+  bottom:14px;
+  z-index:40;
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,.5);
+  cursor:pointer;
+  padding:4px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  transition:color .15s, transform .2s ease;
+}
+#settings-toggle:hover{
+  color:rgba(255,255,255,.9);
+  transform:rotate(30deg);
+}
+
+#settings-toggle .material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 1,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 40;
+  font-size: 22px;
+}
+
+/* サイドメニュー設定パネル */
+#settings-drawer{
+  position:absolute;
+  top:0;
+  left:0;
+  width:260px;
+  height:100%;
+  background:rgba(12, 14, 20, 0.92);
+  border-right:1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter:blur(12px);
+  z-index:50;
+  transform:translateX(-100%);
+  transition:transform .25s cubic-bezier(0.16, 1, 0.3, 1);
+  padding:24px 20px;
+  box-shadow:8px 0 30px rgba(0,0,0,0.5);
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+}
+#settings-drawer.open{
+  transform:translateX(0);
+}
+#settings-drawer .drawer-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  padding-bottom:12px;
+}
+#settings-drawer h3{
+  margin:0;
+  font-size:15px;
+  font-weight:500;
+  color:#e8eaf0;
+}
+#settings-drawer .close-drawer{
+  border:none;
+  background:transparent;
+  color:rgba(255,255,255,.4);
+  font-size:18px;
+  cursor:pointer;
+}
+#settings-drawer .close-drawer:hover{color:#fff}
+
+.setting-item{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.setting-item label{
+  font-size:12px;
+  color:rgba(255,255,255,.6);
+}
+.setting-item select{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:6px;
+  color:#e8eaf0;
+  padding:8px 10px;
+  font-size:13px;
+  outline:none;
+  cursor:pointer;
+  font-family: inherit;
+}
+.setting-item select option{
+  background:#12141d;
+  color:#e8eaf0;
+}
+</style></head>
+<body>
+<div id="app">
+  <canvas id="dust"></canvas>
+  <div id="world"><div id="board"></div></div>
+  
+  <!-- 入力用コンテナ（本文＋タイトル） -->
+  <div id="inline-container">
+    <textarea id="inline-body" placeholder="本文を入力... (Shift+Enterで改行)"></textarea>
+    <input id="inline-input" type="text" placeholder="メモを入力..." maxlength="120">
+  </div>
+
+  <div id="coords">座標 0.0, 0.0</div>
+  <button id="home">初期位置に戻る</button>
+  <div id="hint"><span class="badge">Double-click</span> でメモ作成 ・ ドラッグで移動 ・ 背景ドラッグでボード移動</div>
+  
+  <!-- 設定ボタン -->
+  <button id="settings-toggle" title="設定">
+    <span class="material-symbols-outlined">settings</span>
+  </button>
+  
+  <!-- サイドメニュー -->
+  <div id="settings-drawer">
+    <div class="drawer-header">
+      <h3>設定</h3>
+      <button class="close-drawer" id="close-drawer">×</button>
+    </div>
+    <div class="setting-item">
+      <label for="font-select">フォント切り替え</label>
+      <select id="font-select">
+        <option value="system">システムデフォルト</option>
+        <option value="kiwi">Kiwi Maru (キウイ マルフ)</option>
+        <option value="zen-maru">Zen Maru Gothic (ゼン丸ゴシック)</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<script>
+const app=document.getElementById('app'),world=document.getElementById('world'),board=document.getElementById('board');
+const inlineContainer=document.getElementById('inline-container');
+const inlineInput=document.getElementById('inline-input');
+const inlineBody=document.getElementById('inline-body');
+let notes=[],panX=innerWidth/2,panY=innerHeight/2,scale=1,drag=null,pendingPos=null;
+const coordsEl=document.getElementById('coords');
+const homeBtn=document.getElementById('home');
+
+/* フォント切り替え管理 */
+const fontSelect = document.getElementById('font-select');
+function setFont(fontKey) {
+  if (fontKey === 'kiwi') {
+    document.documentElement.style.setProperty('--current-font', 'var(--font-kiwi)');
+  } else if (fontKey === 'zen-maru') {
+    document.documentElement.style.setProperty('--current-font', 'var(--font-zen-maru)');
+  } else {
+    document.documentElement.style.setProperty('--current-font', 'var(--font-system)');
+  }
+  localStorage.setItem('board-font', fontKey);
+}
+
+const savedFont = localStorage.getItem('board-font') || 'system';
+fontSelect.value = savedFont;
+setFont(savedFont);
+
+fontSelect.addEventListener('change', e => {
+  setFont(e.target.value);
+});
+
+/* サイドメニュー制御 */
+const settingsToggle = document.getElementById('settings-toggle');
+const settingsDrawer = document.getElementById('settings-drawer');
+const closeDrawerBtn = document.getElementById('close-drawer');
+
+settingsToggle.addEventListener('click', e => {
+  e.stopPropagation();
+  settingsDrawer.classList.toggle('open');
+});
+
+closeDrawerBtn.addEventListener('click', () => {
+  settingsDrawer.classList.remove('open');
+});
+
+document.addEventListener('pointerdown', e => {
+  if (settingsDrawer.classList.contains('open') && 
+      !settingsDrawer.contains(e.target) && 
+      !settingsToggle.contains(e.target)) {
+    settingsDrawer.classList.remove('open');
+  }
+});
+
+function render(){
+ world.style.transform=`translate(${panX}px,${panY}px) scale(${scale})`;
+ const x=((innerWidth/2-panX)/scale).toFixed(1), y=((innerHeight/2-panY)/scale).toFixed(1);
+ coordsEl.textContent=`座標 ${x}, ${y}`;
+}
+homeBtn.onclick=()=>{panX=innerWidth/2;panY=innerHeight/2;scale=1;render()};
+function saveState(){localStorage.setItem('infinite-note-board',JSON.stringify(notes))}
+
+/* YouTubeのURLから埋め込み用URLを取得する関数 */
+function getYoutubeEmbedUrl(url) {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : null;
+}
+
+/* Google Favicon API URLを取得する関数 */
+function getFaviconUrl(url) {
+  try {
+    const domain = new URL(url).hostname;
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  } catch(e) {
+    return null;
+  }
+}
+
+/* YouTubeのoEmbed APIを使って動画タイトルを取得する関数 */
+async function fetchYoutubeTitle(url) {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+    if(res.ok){
+      const data = await res.json();
+      return data.title;
+    }
+  } catch(e) {
+    console.warn('YouTube title fetch failed:', e);
+  }
+  return null;
+}
+
+/* 文字列をゆらゆら揺れるspanタグ群に変換して要素に追加する共通関数 */
+function appendAnimatedText(container, text) {
+  container.innerHTML = '';
+  const baseDelay = Math.random() * 5;
+  Array.from(text).forEach((char, index) => {
+    const span = document.createElement('span');
+    span.textContent = char;
+    span.style.animationDelay = `${baseDelay + index * 0.12}s`;
+    container.appendChild(span);
+  });
+}
+
+function addNote(n,persist=true){
+ const el=document.createElement('div');el.className='note';el.dataset.id=n.id;
+ el.style.left=(n.x+5000)+'px';el.style.top=(n.y+5000)+'px';
+
+ const originalTitleText = n.title || 'Untitled';
+ const ytEmbedUrl = getYoutubeEmbedUrl(originalTitleText);
+
+ // ツールチップ要素の作成
+ const tooltip = document.createElement('div');
+ tooltip.className = 'body-tooltip';
+
+ let hasContent = false;
+
+ // YouTube動画が存在する場合iframeを追加
+ if(ytEmbedUrl){
+   hasContent = true;
+   const iframeContainer = document.createElement('div');
+   iframeContainer.className = 'yt-iframe-container';
+   iframeContainer.innerHTML = `<iframe src="${ytEmbedUrl}" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>`;
+   tooltip.appendChild(iframeContainer);
+ }
+
+ // 本文テキストが存在する場合追加
+ if(n.body && n.body.trim()){
+   hasContent = true;
+   const bodyTextNode = document.createTextNode(n.body);
+   tooltip.appendChild(bodyTextNode);
+ }
+
+ if(hasContent){
+   tooltip.classList.add('has-content');
+ }
+
+ el.appendChild(tooltip);
+
+ const titleContainer = document.createElement('span');
+ titleContainer.className = 'title';
+ el.appendChild(titleContainer);
+
+ // リンク・URL判定およびGoogle Favicon API生成
+ const faviconUrl = getFaviconUrl(originalTitleText);
+ const baseDelay = Math.random() * 5;
+
+ if(ytEmbedUrl){
+   // Favicon画像の表示（Google Favicon API使用 + 揺らめきアニメーション用ディレイ設定）
+   if(faviconUrl){
+     const faviconImg = document.createElement('img');
+     faviconImg.className = 'site-favicon';
+     faviconImg.src = faviconUrl;
+     faviconImg.alt = '';
+     faviconImg.style.animationDelay = `${baseDelay}s`;
+     titleContainer.appendChild(faviconImg);
+   }
+
+   const textSpanWrapper = document.createElement('span');
+   textSpanWrapper.style.display = 'inline-flex';
+   titleContainer.appendChild(textSpanWrapper);
+
+   // 初期状態（読み込み中・または過去の保持データ）
+   appendAnimatedText(textSpanWrapper, n.displayTitle || 'YouTube Video...');
+
+   // APIで動画タイトルを取得し、取得できたら置き換える
+   if(!n.displayTitle || n.displayTitle === 'YouTube Video...'){
+     fetchYoutubeTitle(originalTitleText).then(fetchedTitle => {
+       if(fetchedTitle){
+         n.displayTitle = fetchedTitle;
+         appendAnimatedText(textSpanWrapper, fetchedTitle);
+         if(persist) saveState();
+       } else {
+         n.displayTitle = originalTitleText;
+         appendAnimatedText(textSpanWrapper, originalTitleText);
+       }
+     });
+   }
+ } else {
+   // 通常のテキスト/URL処理
+   const urlRegex = /(https?:\/\/[^\s]+)/g;
+   const parts = originalTitleText.split(urlRegex);
+   let charCounter = 0;
+
+   parts.forEach(part => {
+     if(urlRegex.test(part)){
+       // 通常のURL先頭にも Favicon を表示
+       const partFavicon = getFaviconUrl(part);
+       if(partFavicon){
+         const faviconImg = document.createElement('img');
+         faviconImg.className = 'site-favicon';
+         faviconImg.src = partFavicon;
+         faviconImg.alt = '';
+         faviconImg.style.animationDelay = `${baseDelay + charCounter * 0.12}s`;
+         titleContainer.appendChild(faviconImg);
+         charCounter++;
+       }
+
+       const a = document.createElement('a');
+       a.href = part;
+       a.target = '_blank';
+       a.rel = 'noopener noreferrer';
+       a.className = 'note-link';
+       a.addEventListener('pointerdown', e => e.stopPropagation());
+       
+       Array.from(part).forEach(char => {
+         const span = document.createElement('span');
+         span.textContent = char;
+         span.style.animationDelay = `${baseDelay + charCounter * 0.12}s`;
+         a.appendChild(span);
+         charCounter++;
+       });
+       titleContainer.appendChild(a);
+     } else if(part) {
+       Array.from(part).forEach(char => {
+         const span = document.createElement('span');
+         span.textContent = char;
+         span.style.animationDelay = `${baseDelay + charCounter * 0.12}s`;
+         titleContainer.appendChild(span);
+         charCounter++;
+       });
+     }
+   });
+ }
+
+ el.addEventListener('pointerdown',e=>{
+   if(e.target.closest('a') || e.target.closest('.body-tooltip')) return;
+   e.stopPropagation();
+   drag={type:'note',el,n,ox:e.clientX,oy:e.clientY,x:n.x,y:n.y};
+   el.setPointerCapture(e.pointerId);
+   el.style.zIndex=10;
+ });
+ board.appendChild(el);
+ if(persist)saveState();
+}
+
+/* 入力文字列に合わせてボックス幅を可変調整する処理 */
+function adjustInputWidth(){
+  const dummy = document.createElement('span');
+  dummy.style.font = window.getComputedStyle(inlineInput).font;
+  dummy.style.visibility = 'hidden';
+  dummy.style.whiteSpace = 'pre';
+
+  const titleText = inlineInput.value || inlineInput.placeholder || '';
+  const bodyLines = (inlineBody.value || inlineBody.placeholder || '').split('\n');
+  let longestBodyLine = '';
+  bodyLines.forEach(line => {
+    if(line.length > longestBodyLine.length) longestBodyLine = line;
+  });
+
+  dummy.textContent = titleText.length > longestBodyLine.length ? titleText : longestBodyLine;
+  document.body.appendChild(dummy);
+  
+  const width = Math.max(180, dummy.offsetWidth + 24);
+  inlineInput.style.width = width + 'px';
+  inlineBody.style.width = width + 'px';
+  document.body.removeChild(dummy);
+}
+
+inlineInput.addEventListener('input', adjustInputWidth);
+inlineBody.addEventListener('input', adjustInputWidth);
+
+/* ダブルクリック位置の上にテキスト入力ボックスを表示 */
+app.addEventListener('dblclick',e=>{
+  if(e.target.closest('.note') || inlineContainer.contains(e.target) || e.target.closest('#settings-drawer') || e.target.closest('#settings-toggle')) return;
+  const r = app.getBoundingClientRect();
+  const screenX = e.clientX - r.left;
+  const screenY = e.clientY - r.top;
+  
+  pendingPos = {
+    x: (screenX - panX) / scale,
+    y: (screenY - panY) / scale
+  };
+  
+  inlineContainer.style.left = screenX + 'px';
+  inlineContainer.style.top = screenY + 'px';
+  inlineInput.value = '';
+  inlineBody.value = '';
+  inlineContainer.style.display = 'flex';
+  adjustInputWidth();
+  inlineBody.focus();
+});
+
+function commitInlineInput(){
+  if(inlineContainer.style.display === 'none') return;
+  const titleText = inlineInput.value.trim();
+  const bodyText = inlineBody.value.trim();
+  
+  if((titleText || bodyText) && pendingPos){
+    const n = {
+      id: crypto.randomUUID(), 
+      title: titleText || bodyText.split('\n')[0] || 'Untitled', 
+      body: bodyText, 
+      x: pendingPos.x, 
+      y: pendingPos.y
+    };
+    notes.push(n);
+    addNote(n);
+  }
+  inlineContainer.style.display = 'none';
+  pendingPos = null;
+}
+
+inlineInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    commitInlineInput();
+  } else if(e.key === 'Escape'){
+    inlineContainer.style.display = 'none';
+    pendingPos = null;
+  }
+});
+
+inlineBody.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && e.ctrlKey){
+    commitInlineInput();
+  } else if(e.key === 'Escape'){
+    inlineContainer.style.display = 'none';
+    pendingPos = null;
+  }
+});
+
+inlineInput.addEventListener('blur', () => {
+  setTimeout(() => {
+    if(!inlineContainer.contains(document.activeElement)){
+      commitInlineInput();
+    }
+  }, 100);
+});
+
+inlineBody.addEventListener('blur', () => {
+  setTimeout(() => {
+    if(!inlineContainer.contains(document.activeElement)){
+      commitInlineInput();
+    }
+  }, 100);
+});
+
+app.addEventListener('pointerdown',e=>{
+  if(e.target.closest('.note') || inlineContainer.contains(e.target) || e.target.closest('#settings-drawer') || e.target.closest('#settings-toggle')) return;
+  drag={type:'pan',ox:e.clientX,oy:e.clientY,px:panX,py:panY};
+  app.classList.add('dragging');
+});
+
+addEventListener('pointermove',e=>{
+  if(!drag)return;
+  if(drag.type==='pan'){
+    panX=drag.px+e.clientX-drag.ox;
+    panY=drag.py+e.clientY-drag.oy;
+    render();
+  }else{
+    drag.n.x=drag.x+(e.clientX-drag.ox)/scale;
+    drag.n.y=drag.y+(e.clientY-drag.oy)/scale;
+    drag.el.style.left=(drag.n.x+5000)+'px';
+    drag.el.style.top=(drag.n.y+5000)+'px';
+  }
+});
+
+addEventListener('pointerup',()=>{if(drag?.type==='note')saveState();drag=null;app.classList.remove('dragging')});
+
+const c=document.getElementById('dust'),ctx=c.getContext('2d');let dust=[];
+function resize(){c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;c.style.width=innerWidth+'px';c.style.height=innerHeight+'px';ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);dust=Array.from({length:150},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*1.2+.2,a:Math.random()*.45+.08,s:Math.random()*.12-.06}))}
+function dustLoop(){ctx.clearRect(0,0,innerWidth,innerHeight);for(const p of dust){p.x+=p.s;if(p.x<0)p.x=innerWidth;if(p.x>innerWidth)p.x=0;ctx.globalAlpha=p.a;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill()}requestAnimationFrame(dustLoop)}
+addEventListener('resize',resize);resize();dustLoop();render();
+
+[{id:'1',title:'アイデア',body:'新しいアイデアをここに書く',x:-300,y:-180},{id:'2',title:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',body:'参考動画',x:250,y:-320},{id:'3',title:'ゲーム関連',body:'ゲームについてのメモ',x:-120,y:260}].forEach(n=>{notes.push(n);addNote(n,false)});
+</script></body></html>
